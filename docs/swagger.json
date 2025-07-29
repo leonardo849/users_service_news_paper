@@ -1,0 +1,12 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "api for a [name] project",
+        "title": "Backend Portfolio API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:port",
+    "basePath": "/",
+    "paths": {}
+}
