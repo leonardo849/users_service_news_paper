@@ -75,3 +75,16 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 func cleanDatabase(db *gorm.DB) {
 	// db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model) here you delete all contents of your models
 }
+
+func testMessage(t *testing.T) {
+	e := newExpect(t)
+	response := e.GET("/"). 
+	Expect().
+	Status(200).JSON(). 
+	Object()
+
+	message := response.Value("message").String().NotEmpty().Raw()
+	if message != "what's up" {
+		t.Errorf("welcome message error")
+	}
+}
