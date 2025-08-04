@@ -2,7 +2,7 @@ package repository
 
 import (
 	"fmt"
-	_ "template-backend/internal/model"
+	_ "users-service/internal/model"
 	"log"
 	"os"
 	"gorm.io/driver/postgres"

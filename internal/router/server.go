@@ -1,10 +1,10 @@
 package router
 
 import (
-	_ "template-backend/internal/dto"
+	_ "users-service/internal/dto"
 	"os"
-	"template-backend/internal/logger"
-	"template-backend/internal/middleware"
+	"users-service/internal/logger"
+	"users-service/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

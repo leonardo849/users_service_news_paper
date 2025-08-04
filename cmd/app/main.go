@@ -3,14 +3,14 @@ package main
 import (
 	"log"
 	"os"
-	"template-backend/config"
-	"template-backend/internal/logger"
-	"template-backend/internal/repository"
-	"template-backend/internal/router"
-	"template-backend/internal/validate"
+	"users-service/config"
+	"users-service/internal/logger"
+	"users-service/internal/repository"
+	"users-service/internal/router"
+	"users-service/internal/validate"
 
 	"go.uber.org/zap"
-	_ "template-backend/docs"
+	_ "users-service/docs"
 )
 
 // @title Backend Portfolio API
