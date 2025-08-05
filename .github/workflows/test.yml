@@ -37,6 +37,6 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://user:password@localhost:5432/testdb?sslmode=disable
+          DATABASE_URI: postgres://user:password@localhost:5432/testdb?sslmode=disable
           APP_ENV: PROD
         run: go test ./... -v
