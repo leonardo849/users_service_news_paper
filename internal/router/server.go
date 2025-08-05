@@ -1,7 +1,7 @@
 package router
 
 import (
-	_ "users-service/internal/dto"
+	"users-service/internal/dto"
 	"os"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
@@ -28,7 +28,7 @@ func SetupApp() *fiber.App {
 	// @Success 200 {object} dto.MessageDTO
 	// @Router / [get]
 	app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Status(200).JSON(fiber.Map{"message": "what's up?"})
+		return ctx.Status(200).JSON(dto.MessageDTO{Message: "what's up"})
 	})
 
 	app.Get("/swagger/*", swagger.HandlerDefault)

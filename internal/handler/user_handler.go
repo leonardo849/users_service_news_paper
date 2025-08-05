@@ -16,13 +16,14 @@ type UserController struct {
 
 // @Summary Create new user
 // @Description that method creates a new user
-// @Tags user
+// @Tags users
 // @Accept json
 // @Produce json
 // @Success 201 {object} dto.CreateUserDTO
 // @Failure 409 {object} dto.ErrorDTO
 // @Failure 500 {object} dto.ErrorDTO
 // @Failure 400 {object} dto.ErrorDTO
+// @Router /users/create [post]
 func (u *UserController) CreateUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var input dto.CreateUserDTO

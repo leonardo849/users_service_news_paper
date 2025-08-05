@@ -30,5 +30,32 @@ info:
   description: api for a user services for a newspaper
   title: Backend Portfolio API
   version: "1.0"
-paths: {}
+paths:
+  /users/create:
+    post:
+      consumes:
+      - application/json
+      description: that method creates a new user
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateUserDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Create new user
+      tags:
+      - user
 swagger: "2.0"
