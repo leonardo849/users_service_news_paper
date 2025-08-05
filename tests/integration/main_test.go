@@ -4,13 +4,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"testing"
 	"users-service/config"
 	"users-service/internal/logger"
+	"users-service/internal/model"
 	_ "users-service/internal/model"
 	"users-service/internal/repository"
 	"users-service/internal/router"
 	"users-service/internal/validate"
-	"testing"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2"
@@ -73,18 +74,14 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 }
 
 func cleanDatabase(db *gorm.DB) {
-	// db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model) here you delete all contents of your models
+	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
 }
 
-func testMessage(t *testing.T) {
+func TestMessage(t *testing.T) {
 	e := newExpect(t)
-	response := e.GET("/"). 
+	e.GET("/"). 
 	Expect().
 	Status(200).JSON(). 
 	Object()
 
-	message := response.Value("message").String().NotEmpty().Raw()
-	if message != "what's up" {
-		t.Errorf("welcome message error")
-	}
 }

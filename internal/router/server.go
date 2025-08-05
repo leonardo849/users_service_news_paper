@@ -17,7 +17,10 @@ func SetupApp() *fiber.App {
 	
 	logger.ZapLogger.Info("cors is ready")
 	app.Use(middleware.LogRequestsMiddleware())
-	
+
+	usersGroup := app.Group("/users")
+	setupUserRoutes(usersGroup)
+
 	// @Summary Hello
 	// @Description welcome message
 	// @Accept json
@@ -40,7 +43,7 @@ func RunServer() error {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8081"
 	}
 
 	return app.Listen(":" + port)

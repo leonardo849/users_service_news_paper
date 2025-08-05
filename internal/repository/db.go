@@ -2,9 +2,11 @@ package repository
 
 import (
 	"fmt"
-	_ "users-service/internal/model"
 	"log"
 	"os"
+	"users-service/internal/model"
+	_ "users-service/internal/model"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -29,7 +31,7 @@ func ConnectToDatabase() (*gorm.DB, error) {
 }
 
 func migrateModels(db *gorm.DB) error {
-	err := db.AutoMigrate()
+	err := db.AutoMigrate(&model.UserModel{})
 	if err != nil {
 		return err
 	}

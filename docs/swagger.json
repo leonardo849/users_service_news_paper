@@ -8,5 +8,15 @@
     },
     "host": "localhost:port",
     "basePath": "/",
-    "paths": {}
+    "paths": {},
+    "definitions": {
+        "dto.ErrorDTO": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

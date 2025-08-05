@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func setupUserRoutes(userGroup fiber.Group) {
+func setupUserRoutes(userGroup fiber.Router) {
 	userService := service.UserService{DB: repository.DB}
 	userController := handler.UserController{UserService: &userService}
 	userGroup.Post("/create", userController.CreateUser())

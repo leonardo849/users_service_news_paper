@@ -14,6 +14,15 @@ type UserController struct {
 	UserService *service.UserService
 }
 
+// @Summary Create new user
+// @Description that method creates a new user
+// @Tags user
+// @Accept json
+// @Produce json
+// @Sucess 201 {object} dto.CreateUserDTO
+// @Failure 409 {object} dto.ErrorDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Failure 400 {object} dto.ErrorDTO
 func (u *UserController) CreateUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		var input dto.CreateUserDTO

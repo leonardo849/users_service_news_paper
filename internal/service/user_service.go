@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"users-service/internal/dto"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
@@ -27,12 +28,21 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 		logger.ZapLogger.Error("internal server in stringToHash", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
+	_, err = gorm.G[model.UserModel](u.DB).Where("username = ?", dto.Username).First(fiberCtx)
+	if err == nil {
+		logger.ZapLogger.Error("there is already a user with that username", zap.String("function", "userService.CreateUser"), zap.Error(err))
+		return 409, "there is already a user with that username"
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.ZapLogger.Error("internal server in find by username", zap.String("function", "userService.CreateUser"), zap.Error(err))
+		return 500, err.Error()
+	}
 	newUser = model.UserModel{
 		Username: dto.Username,
 		Email: dto.Email,
 		Password: hash,
 		FullName: dto.Fullname,
 	}
+	
 	err = gorm.G[model.UserModel](u.DB).Create(fiberCtx, &newUser)
 	if err != nil {
 		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))

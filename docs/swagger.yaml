@@ -1,4 +1,10 @@
 basePath: /
+definitions:
+  dto.ErrorDTO:
+    properties:
+      error:
+        type: string
+    type: object
 host: localhost:port
 info:
   contact: {}
