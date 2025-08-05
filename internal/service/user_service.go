@@ -51,3 +51,4 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 	logger.ZapLogger.Info("new user was created" )
 	return 201, "user was created"
 }
+
