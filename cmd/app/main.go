@@ -5,12 +5,14 @@ import (
 	"os"
 	"users-service/config"
 	"users-service/internal/logger"
+	"users-service/internal/prometheus"
 	"users-service/internal/repository"
 	"users-service/internal/router"
 	"users-service/internal/validate"
 
-	"go.uber.org/zap"
 	_ "users-service/docs"
+
+	"go.uber.org/zap"
 )
 
 // @title Backend Portfolio API
@@ -30,6 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	prometheus.StartPrometheus()
 	validate.StartValidator()
 	if err := router.RunServer(); err != nil {
 		logger.ZapLogger.Error("error in run server", 

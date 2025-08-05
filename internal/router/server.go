@@ -1,14 +1,16 @@
 package router
 
 import (
-	"users-service/internal/dto"
 	"os"
+	"users-service/internal/dto"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
 
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func SetupApp() *fiber.App {
@@ -16,7 +18,7 @@ func SetupApp() *fiber.App {
 	app.Use(cors.New())
 	
 	logger.ZapLogger.Info("cors is ready")
-	app.Use(middleware.LogRequestsMiddleware())
+	app.Use(middleware.LogRequestsMiddleware(), middleware.PrometheusMiddleware())
 
 	usersGroup := app.Group("/users")
 	setupUserRoutes(usersGroup)
@@ -30,6 +32,8 @@ func SetupApp() *fiber.App {
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.Status(200).JSON(dto.MessageDTO{Message: "what's up"})
 	})
+
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	logger.ZapLogger.Info("swagger is ready")
