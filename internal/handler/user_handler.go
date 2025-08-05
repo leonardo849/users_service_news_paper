@@ -19,7 +19,7 @@ type UserController struct {
 // @Tags user
 // @Accept json
 // @Produce json
-// @Sucess 201 {object} dto.CreateUserDTO
+// @Success 201 {object} dto.CreateUserDTO
 // @Failure 409 {object} dto.ErrorDTO
 // @Failure 500 {object} dto.ErrorDTO
 // @Failure 400 {object} dto.ErrorDTO

@@ -16,6 +16,32 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {},
     "definitions": {
+        "dto.CreateUserDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "fullname",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "fullname": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
         "dto.ErrorDTO": {
             "type": "object",
             "properties": {
@@ -30,11 +56,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:port",
+	Host:             "localhost:8081",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Backend Portfolio API",
-	Description:      "api for a [name] project",
+	Description:      "api for a user services for a newspaper",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

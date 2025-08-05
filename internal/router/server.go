@@ -25,7 +25,7 @@ func SetupApp() *fiber.App {
 	// @Description welcome message
 	// @Accept json
 	// @Produce json
-	// @Sucess 200 {object} dto.MessageDTO
+	// @Success 200 {object} dto.MessageDTO
 	// @Router / [get]
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.Status(200).JSON(fiber.Map{"message": "what's up?"})

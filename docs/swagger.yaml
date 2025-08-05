@@ -1,14 +1,33 @@
 basePath: /
 definitions:
+  dto.CreateUserDTO:
+    properties:
+      email:
+        maxLength: 100
+        type: string
+      fullname:
+        maxLength: 100
+        type: string
+      password:
+        type: string
+      username:
+        maxLength: 50
+        type: string
+    required:
+    - email
+    - fullname
+    - password
+    - username
+    type: object
   dto.ErrorDTO:
     properties:
       error:
         type: string
     type: object
-host: localhost:port
+host: localhost:8081
 info:
   contact: {}
-  description: api for a [name] project
+  description: api for a user services for a newspaper
   title: Backend Portfolio API
   version: "1.0"
 paths: {}

@@ -1,15 +1,41 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "api for a [name] project",
+        "description": "api for a user services for a newspaper",
         "title": "Backend Portfolio API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:port",
+    "host": "localhost:8081",
     "basePath": "/",
     "paths": {},
     "definitions": {
+        "dto.CreateUserDTO": {
+            "type": "object",
+            "required": [
+                "email",
+                "fullname",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "fullname": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
         "dto.ErrorDTO": {
             "type": "object",
             "properties": {

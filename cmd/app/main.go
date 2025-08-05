@@ -15,8 +15,8 @@ import (
 
 // @title Backend Portfolio API
 // @version 1.0
-// @description api for a [name] project
-// @host localhost:port
+// @description api for a user services for a newspaper
+// @host localhost:8081
 // @BasePath /
 func main() {
 	if err := config.SetupEnvVar(); err != nil {
