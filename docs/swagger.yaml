@@ -24,6 +24,35 @@ definitions:
       error:
         type: string
     type: object
+  dto.FindUserDTO:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      fullname:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.LoginDTO:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.LoginUserDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -36,6 +65,13 @@ paths:
       consumes:
       - application/json
       description: that method creates a new user
+      parameters:
+      - description: user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserDTO'
       produces:
       - application/json
       responses:
@@ -57,5 +93,68 @@ paths:
             $ref: '#/definitions/dto.ErrorDTO'
       summary: Create new user
       tags:
-      - user
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: that is the login method
+      parameters:
+      - description: user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Login User
+      tags:
+      - users
+  /users/one/{id}:
+    get:
+      consumes:
+      - application/json
+      description: that method finds an user
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.FindUserDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Find One User
+      tags:
+      - users
 swagger: "2.0"

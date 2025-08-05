@@ -10,6 +10,7 @@ import (
 )
 
 var errProjectRootNotFound = os.ErrNotExist
+var Key string
 
 func SetupEnvVar() error {
 	mode := strings.ToUpper(os.Getenv("APP_ENV"))
@@ -25,10 +26,11 @@ func SetupEnvVar() error {
 		if err != nil {
 			return  err
 		}
-
+		
 	} else {
 		log.Print("prod mode")
 	}
+	Key = os.Getenv("SECRETWORDJWT")
 	return  nil
 
 }
