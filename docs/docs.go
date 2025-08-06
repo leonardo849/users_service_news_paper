@@ -43,7 +43,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateUserDTO"
+                            "$ref": "#/definitions/dto.CreateDTO"
                         }
                     },
                     "400": {
@@ -165,6 +165,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.CreateDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "string": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateUserDTO": {
             "type": "object",
             "required": [

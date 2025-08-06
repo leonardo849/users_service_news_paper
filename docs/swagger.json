@@ -37,7 +37,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.CreateUserDTO"
+                            "$ref": "#/definitions/dto.CreateDTO"
                         }
                     },
                     "400": {
@@ -159,6 +159,17 @@
         }
     },
     "definitions": {
+        "dto.CreateDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "string": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateUserDTO": {
             "type": "object",
             "required": [

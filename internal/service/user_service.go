@@ -71,7 +71,7 @@ func (u *UserService) FindOneUser(id string, fiberCtx context.Context) (status i
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			
 			logger.ZapLogger.Error("a user with that id doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
-			return 404, "user with that id already exists"
+			return 404, "user with that id doesn't exists"
 		} else {
 			logger.ZapLogger.Error("internal server", zap.Error(err), zap.String("function", "userservice.findoneuser"))
 			return 500, err.Error()

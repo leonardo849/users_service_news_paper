@@ -1,5 +1,12 @@
 basePath: /
 definitions:
+  dto.CreateDTO:
+    properties:
+      id:
+        type: string
+      string:
+        type: string
+    type: object
   dto.CreateUserDTO:
     properties:
       email:
@@ -78,7 +85,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.CreateUserDTO'
+            $ref: '#/definitions/dto.CreateDTO'
         "400":
           description: Bad Request
           schema:
