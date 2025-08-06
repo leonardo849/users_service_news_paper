@@ -57,8 +57,8 @@ func TestMain(m *testing.M) {
 	}
 	
 	cleanDatabase(db)
-	defer cleanDatabase(db)
 	code := m.Run()
+	cleanDatabase(db)
 	sqldb.Close()
 	os.Exit(code)
 }

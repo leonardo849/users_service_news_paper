@@ -17,7 +17,7 @@ var input = dto.CreateUserDTO{
 
 func TestCreateUser(t *testing.T) {
 	e := newExpect(t)
-	res := e.POST("/users/create"). 
+	e.POST("/users/create"). 
 	WithJSON(map[string]string{
 		"username": input.Username,
 		"email": input.Email,
@@ -26,7 +26,7 @@ func TestCreateUser(t *testing.T) {
 	}).Expect(). 
 	Status(201).JSON().Object()
 
-	id = res.Value("id").String().NotEmpty().Raw()
+	
 
 	e.POST("/users/create"). 
 	WithJSON(map[string]string{
@@ -69,9 +69,20 @@ func TestLoginUser(t *testing.T) {
 
 func TestFindOneUser(t *testing.T) {
 	e := newExpect(t)
-	  e.GET("/users/one/" + id).
-      WithHeader("Authorization", "Bearer " + token).
-      Expect().
-      Status(200).
-      JSON().Object()
+	res := e.POST("/users/create"). 
+	WithJSON(map[string]string{
+		"username": "TestUser244r@",
+		"email": "Batman12345678@gmail.com",
+		"password": input.Password,
+		"fullname": input.Fullname,
+	}).Expect(). 
+	Status(201).JSON().Object()
+
+	id := res.Value("id").String().NotEmpty().Raw()
+	
+	e.GET("/users/one/" + id).
+    WithHeader("Authorization", "Bearer " + token).
+    Expect().
+    Status(200).
+    JSON().Object()
 }

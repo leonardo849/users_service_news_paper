@@ -20,5 +20,5 @@ type UserModel struct {
 
 func (u *UserModel) BeforeCreate(tx *gorm.DB) (err error) {
 	u.ID = uuid.New()
-	return
+ 	return
 }
