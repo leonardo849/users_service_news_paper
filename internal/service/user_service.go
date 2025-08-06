@@ -69,6 +69,7 @@ func (u *UserService) FindOneUser(id string, fiberCtx context.Context) (status i
 	user, err := gorm.G[model.UserModel](u.DB).Where("id = ?", id).First(fiberCtx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			
 			logger.ZapLogger.Error("a user with that id doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
 			return 404, "user with that id already exists"
 		} else {

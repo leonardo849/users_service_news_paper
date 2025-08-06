@@ -7,7 +7,7 @@ import (
 
 const userTestName string = "TestUser1@"
 var token string
-
+var id string 
 var input = dto.CreateUserDTO{
 	Username: userTestName,
 	Email: "Batman123@gmail.com",
@@ -17,14 +17,16 @@ var input = dto.CreateUserDTO{
 
 func TestCreateUser(t *testing.T) {
 	e := newExpect(t)
-	e.POST("/users/create"). 
+	res := e.POST("/users/create"). 
 	WithJSON(map[string]string{
 		"username": input.Username,
 		"email": input.Email,
 		"password": input.Password,
 		"fullname": input.Fullname,
 	}).Expect(). 
-	Status(201)
+	Status(201).JSON().Object()
+
+	id = res.Value("id").String().NotEmpty().Raw()
 
 	e.POST("/users/create"). 
 	WithJSON(map[string]string{
@@ -63,4 +65,13 @@ func TestLoginUser(t *testing.T) {
 	}). 
 	Expect().
 	Status(404)
+}
+
+func TestFindOneUser(t *testing.T) {
+	e := newExpect(t)
+	  e.GET("/users/one/" + id).
+      WithHeader("Authorization", "Bearer " + token).
+      Expect().
+      Status(200).
+      JSON().Object()
 }
