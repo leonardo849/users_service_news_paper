@@ -15,7 +15,10 @@ import (
 
 type UserService struct {
 	DB *gorm.DB
+	UserServiceRedis *UserServiceRedis	
 }
+
+
 
 func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context) (status int, message interface{}) {
 	if err := validate.Validate.Struct(dto); err != nil {
@@ -51,14 +54,19 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 		FullName: dto.Fullname,
 	}
 	
-	err = gorm.G[model.UserModel](u.DB).Create(fiberCtx, &newUser)
-	if err != nil {
+	
+	if err = gorm.G[model.UserModel](u.DB).Create(fiberCtx, &newUser); err != nil {
 		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	logger.ZapLogger.Info("new user was created" )
+	msg := "user was created"
+	if err =u.UserServiceRedis.SetUser("user", newUser, fiberCtx); err != nil {
+		logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
+		msg = "user was created, but user wasn't setted in cache" 
+	}
+	logger.ZapLogger.Info("new user was created")
 	m := map[string]string{
-		"message": "user was created",
+		"message": msg,
 		"id": newUser.ID.String(),
 	}
 

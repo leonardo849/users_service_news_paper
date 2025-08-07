@@ -4,6 +4,7 @@ import (
 	"users-service/internal/handler"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
+	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/service"
 
@@ -11,7 +12,8 @@ import (
 )
 
 func setupUserRoutes(userGroup fiber.Router) {
-	userService := service.UserService{DB: repository.DB}
+	userServiceRedis := &service.UserServiceRedis{RC: redis.Rc}
+	userService := service.UserService{DB: repository.DB, UserServiceRedis: userServiceRedis}
 	userController := handler.UserController{UserService: &userService}
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Post("/login", userController.LoginUser())

@@ -54,7 +54,6 @@ func (u *UserController) CreateUser() fiber.Handler {
 func (u *UserController) FindOneUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		logger.ZapLogger.Info("original URL", zap.String("url", ctx.OriginalURL()))
 		status, reply := u.UserService.FindOneUser(id, ctx.Context())
 		if status >= 400 {
 			logger.ZapLogger.Error("error in find one user user controller", zap.Any("error", reply))

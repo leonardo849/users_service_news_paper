@@ -7,7 +7,6 @@ import (
 
 const userTestName string = "TestUser1@"
 var token string
-var id string 
 var input = dto.CreateUserDTO{
 	Username: userTestName,
 	Email: "Batman123@gmail.com",

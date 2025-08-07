@@ -6,6 +6,7 @@ import (
 	"users-service/config"
 	"users-service/internal/logger"
 	"users-service/internal/prometheus"
+	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/router"
 	"users-service/internal/validate"
@@ -31,9 +32,16 @@ func main() {
 		logger.ZapLogger.Error("error in repository.connectodatabase", zap.String("function", "repository.ConnectToDatabase()"), zap.Error(err))
 		os.Exit(1)
 	}
+	if _, err := redis.ConnectToRedis(); err != nil {
+		logger.ZapLogger.Error("error in connect to redis", zap.String("function", "redis.ConnectToRedis"), zap.Error(err))
+		os.Exit(1)
+	}
 
 	prometheus.StartPrometheus()
 	validate.StartValidator()
+
+
+
 	if err := router.RunServer(); err != nil {
 		logger.ZapLogger.Error("error in run server", 
 		zap.Error(err),
