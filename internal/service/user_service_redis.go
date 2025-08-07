@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"time"
+	"users-service/internal/dto"
 	"users-service/internal/logger"
-	"users-service/internal/model"
 
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -15,10 +15,9 @@ type UserServiceRedis struct {
 	RC *redis.Client
 }
 
-func (u *UserServiceRedis) SetUser(property string, user model.UserModel, fiberCtx context.Context) error {
+func (u *UserServiceRedis) SetUser(property string, user dto.FindUserDTO, fiberCtx context.Context) error {
 	key := property + ":" + user.ID.String()
 	logger.ZapLogger.Info(key)
-	logger.ZapLogger.Info("user", zap.Any("user", user))
 	json, err := json.Marshal(user)
 	if err != nil {
 		logger.ZapLogger.Error("error in json marshal(user model.usermodel)", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))

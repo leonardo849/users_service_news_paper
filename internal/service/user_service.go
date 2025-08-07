@@ -20,18 +20,18 @@ type UserService struct {
 
 
 
-func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context) (status int, message interface{}) {
-	if err := validate.Validate.Struct(dto); err != nil {
+func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Context) (status int, message interface{}) {
+	if err := validate.Validate.Struct(input); err != nil {
 		logger.ZapLogger.Error("validate error dto.createuserdto", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 400, err.Error()
 	}
 	var newUser model.UserModel
-	hash, err := helper.StringToHash(dto.Password)
+	hash, err := helper.StringToHash(input.Password)
 	if err != nil {
 		logger.ZapLogger.Error("internal server in stringToHash", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	_, err = gorm.G[model.UserModel](u.DB).Where("username = ?", dto.Username).First(fiberCtx)
+	_, err = gorm.G[model.UserModel](u.DB).Where("username = ?", input.Username).First(fiberCtx)
 	if err == nil {
 		logger.ZapLogger.Error("there is already a user with that username", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 409, "there is already a user with that username"
@@ -39,7 +39,7 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 		logger.ZapLogger.Error("internal server in find by username", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	_, err = gorm.G[model.UserModel](u.DB).Where("email = ?", dto.Email).First(fiberCtx)
+	_, err = gorm.G[model.UserModel](u.DB).Where("email = ?", input.Email).First(fiberCtx)
 	if err == nil {
 		logger.ZapLogger.Error("there is already a user with that email", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 409, "there is already a user with that email"
@@ -48,10 +48,10 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 		return 500, err.Error()
 	}
 	newUser = model.UserModel{
-		Username: dto.Username,
-		Email: dto.Email,
+		Username: input.Username,
+		Email: input.Email,
 		Password: hash,
-		FullName: dto.Fullname,
+		FullName: input.Fullname,
 	}
 	
 	
@@ -60,7 +60,7 @@ func (u *UserService) CreateUser(dto dto.CreateUserDTO, fiberCtx context.Context
 		return 500, err.Error()
 	}
 	msg := "user was created"
-	if err =u.UserServiceRedis.SetUser("user", newUser, fiberCtx); err != nil {
+	if err =u.UserServiceRedis.SetUser("user", dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive}, fiberCtx); err != nil {
 		logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		msg = "user was created, but user wasn't setted in cache" 
 	}

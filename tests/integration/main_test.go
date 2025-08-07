@@ -9,6 +9,7 @@ import (
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	_ "users-service/internal/model"
+	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/router"
 	"users-service/internal/validate"
@@ -45,6 +46,9 @@ func TestMain(m *testing.M) {
 	}
 	db, err := repository.ConnectToDatabase()
 	if err != nil {
+		log.Panic(err.Error())
+	}
+	if _, err = redis.ConnectToRedis(); err != nil {
 		log.Panic(err.Error())
 	}
 	validate.StartValidator()
