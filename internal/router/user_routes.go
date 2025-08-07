@@ -12,9 +12,9 @@ import (
 )
 
 func setupUserRoutes(userGroup fiber.Router) {
-	userServiceRedis := &service.UserServiceRedis{RC: redis.Rc}
-	userService := service.UserService{DB: repository.DB, UserServiceRedis: userServiceRedis}
-	userController := handler.UserController{UserService: &userService}
+	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
+	userService := service.CreateUserService(repository.DB, userServiceRedis)
+	userController := handler.UserController{UserService: userService}
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired() ,userController.FindOneUser())

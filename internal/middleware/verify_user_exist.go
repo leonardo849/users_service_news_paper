@@ -3,19 +3,25 @@ package middleware
 import (
 	"time"
 	"users-service/internal/dto"
+	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/service"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	
 )
 
-var userService *service.UserService = &service.UserService{}
+var userServiceRedis = service.CreateUserServiceRedis(nil)
+var userService = service.CreateUserService(nil, userServiceRedis)
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		if userService.DB == nil {
-			userService.DB = repository.DB
+		if userServiceRedis.IsRedisNil() {
+			userServiceRedis.SetRedisDB(redis.Rc)
 		}
+		if userService.IsDBnil() {
+			userService.SetDB(repository.DB)
+		}
+
 		mapClaims := ctx.Locals("user").(jwt.MapClaims)
 		user := map[string]interface{}(mapClaims)
 		status, reply := userService.FindOneUser(user["id"].(string), ctx.Context())

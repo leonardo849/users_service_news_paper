@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2"
+	redisLib "github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -48,7 +50,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	if _, err = redis.ConnectToRedis(); err != nil {
+	redisClient, err := redis.ConnectToRedis()
+	if err != nil {
 		log.Panic(err.Error())
 	}
 	validate.StartValidator()
@@ -60,10 +63,11 @@ func TestMain(m *testing.M) {
 		log.Panic(err.Error())
 	}
 	
-	cleanDatabase(db)
+	cleanDatabases(db, redisClient)
 	code := m.Run()
-	cleanDatabase(db)
+	cleanDatabases(db, redisClient)
 	sqldb.Close()
+	
 	os.Exit(code)
 }
 
@@ -78,8 +82,9 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func cleanDatabase(db *gorm.DB) {
+func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client) {
 	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
+	redisClient.FlushDB(context.Background())
 }
 
 func TestMessage(t *testing.T) {

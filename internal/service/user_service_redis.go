@@ -12,21 +12,42 @@ import (
 )
 
 type UserServiceRedis struct {
-	RC *redis.Client
+	rc *redis.Client
 }
 
-func (u *UserServiceRedis) SetUser(property string, user dto.FindUserDTO, fiberCtx context.Context) error {
-	key := property + ":" + user.ID.String()
+func CreateUserServiceRedis(rc *redis.Client) *UserServiceRedis {
+	return &UserServiceRedis{
+		rc: rc,
+	}
+}
+
+func (u *UserServiceRedis) getKey(id string) string {
+	return "user" + ":" + id
+}
+
+func (u *UserServiceRedis) SetUser(user dto.FindUserDTO, fiberCtx context.Context) error {
+	key := u.getKey(user.ID.String())
 	logger.ZapLogger.Info(key)
 	json, err := json.Marshal(user)
 	if err != nil {
-		logger.ZapLogger.Error("error in json marshal(user model.usermodel)", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
+		logger.ZapLogger.Error("error in json marshal(user dto.FindUserDTO)", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
 		return err
 	}
-	if redisStatus := u.RC.Set(fiberCtx, key, json, 30*time.Minute); redisStatus.Err() != nil {
+	if redisStatus := u.rc.Set(fiberCtx, key, json, 30*time.Minute); redisStatus.Err() != nil {
 		logger.ZapLogger.Error("error in redisClient.set", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
-		return  redisStatus.Err()
+		return redisStatus.Err()
 	}
+
 	logger.ZapLogger.Info("user was setted in redis")
 	return nil
+}
+
+func (u *UserServiceRedis) IsRedisNil() bool {
+	return u.rc == nil
+}
+
+func (u *UserServiceRedis) SetRedisDB(redisClient *redis.Client) {
+	if u.IsRedisNil() {
+		u.rc = redisClient
+	}
 }
