@@ -16,8 +16,6 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
           POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -26,8 +24,6 @@ jobs:
 
       redis:
         image: redis:latest
-        ports:
-          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -44,6 +40,15 @@ jobs:
 
       - name: install dependencies
         run: go mod tidy
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          until pg_isready -h postgres -p 5432 -U user; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+        env:
+          PGPASSWORD: password
 
       - name: Run tests
         env:
