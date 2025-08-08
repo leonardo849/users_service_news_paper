@@ -16,19 +16,23 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
           POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       redis:
-        image: redis:latest
+        image: redis:7.2
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
 
     steps:
       - uses: actions/checkout@v3
@@ -38,23 +42,14 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: install dependencies
+      - name: install dependicies 
         run: go mod tidy
-
-      - name: Wait for PostgreSQL to be ready
-        run: |
-          until pg_isready -h postgres -p 5432 -U user; do
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-        env:
-          PGPASSWORD: password
 
       - name: Run tests
         env:
-          DATABASE_URI: postgres://user:password@postgres:5432/testdb?sslmode=disable
-          REDIS_URI: redis:6379
-          REDIS_DATABASE: 1
-          SECRETWORDJWT: ${{ secrets.SECRETWORDJWT }}
+          DATABASE_URI: postgres://user:password@localhost:5432/testdb?sslmode=disable
           APP_ENV: PROD
+          SECRETWORDJWT: ba72f4da0bf07a8483781f2a6d39d933ac010720
+          REDIS_URI: localhost:6379
+          REDIS_DATABASE: 1
         run: go test ./... -v
