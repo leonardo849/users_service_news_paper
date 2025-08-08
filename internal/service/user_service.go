@@ -78,10 +78,17 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 }
 
 func (u *UserService) FindOneUser(id string, fiberCtx context.Context) (status int, message interface{}) {
+	
+	userRedis, err := u.userServiceRedis.FindUser(id, fiberCtx)
+	if err == nil {
+		logger.ZapLogger.Info("user was gotten from redis")
+		return 200, *userRedis
+	}
+
 	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.ZapLogger.Error("a user with that id doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
+			logger.ZapLogger.Error("a user with id "  + id + " doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
 			return 404, "user with that id doesn't exists"
 		} else {
 			logger.ZapLogger.Error("internal server", zap.Error(err), zap.String("function", "userservice.findoneuser"))
@@ -97,7 +104,12 @@ func (u *UserService) FindOneUser(id string, fiberCtx context.Context) (status i
 		UpdatedAt: user.UpdatedAt,
 		IsActive:  user.IsActive,
 	}
-	logger.ZapLogger.Info("returning dto")
+	err = u.userServiceRedis.SetUser(dto, fiberCtx)
+	msg := "returning dto"
+	if err != nil {
+		message = "returning dto without cache"
+	}
+	logger.ZapLogger.Info(msg)
 	return 200, dto
 }
 

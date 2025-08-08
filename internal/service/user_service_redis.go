@@ -27,7 +27,6 @@ func (u *UserServiceRedis) getKey(id string) string {
 
 func (u *UserServiceRedis) SetUser(user dto.FindUserDTO, fiberCtx context.Context) error {
 	key := u.getKey(user.ID.String())
-	logger.ZapLogger.Info(key)
 	json, err := json.Marshal(user)
 	if err != nil {
 		logger.ZapLogger.Error("error in json marshal(user dto.FindUserDTO)", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
@@ -40,6 +39,23 @@ func (u *UserServiceRedis) SetUser(user dto.FindUserDTO, fiberCtx context.Contex
 
 	logger.ZapLogger.Info("user was setted in redis")
 	return nil
+}
+
+func (u *UserServiceRedis) FindUser(id string, fiberCtx context.Context) (*dto.FindUserDTO, error) {
+	key := u.getKey(id)
+	val, err:= u.rc.Get(fiberCtx, key).Result()
+	if err != nil {
+		logger.ZapLogger.Error("error in get user", zap.Error(err), zap.String("function", "userServiceRedis.GetUser"))
+		return nil, err
+	}
+	var user dto.FindUserDTO
+	err = json.Unmarshal([]byte(val), &user)
+	if err != nil {
+		logger.ZapLogger.Error("error in json unmarshal", zap.Error(err), zap.String("function", "userServiceRedis.GetUser"))
+		return  nil,err
+	}
+	logger.ZapLogger.Info("user with id" + " " + user.ID.String() + " " + "was found")
+	return  &user, nil
 }
 
 func (u *UserServiceRedis) IsRedisNil() bool {
