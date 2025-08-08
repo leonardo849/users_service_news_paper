@@ -24,6 +24,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v3
 
@@ -32,11 +42,14 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: install dependicies 
+      - name: install dependencies
         run: go mod tidy
 
       - name: Run tests
         env:
-          DATABASE_URI: postgres://user:password@localhost:5432/testdb?sslmode=disable
+          DATABASE_URI: postgres://user:password@postgres:5432/testdb?sslmode=disable
+          REDIS_URI: redis:6379
+          REDIS_DATABASE: 1
+          SECRETWORDJWT: ${{ secrets.SECRETWORDJWT }}
           APP_ENV: PROD
         run: go test ./... -v
