@@ -64,7 +64,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		return 500, err.Error()
 	}
 	msg := "user was created"
-	if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive}, fiberCtx); err != nil {
+	if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
 		logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		msg = "user was created, but user wasn't setted in cache"
 	}
@@ -103,6 +103,7 @@ func (u *UserService) FindOneUser(id string, fiberCtx context.Context) (status i
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		IsActive:  user.IsActive,
+		Role: user.Role,
 	}
 	err = u.userServiceRedis.SetUser(dto, fiberCtx)
 	msg := "returning dto"

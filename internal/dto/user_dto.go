@@ -1,8 +1,9 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type CreateUserDTO struct {
@@ -20,9 +21,10 @@ type FindUserDTO struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	IsActive  bool      `json:"is_active"`
+	Role      string    `json:"role"`
 }
 
 type LoginUserDTO struct {
-	Email     string    `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }

@@ -30,8 +30,8 @@ func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 		id := user["id"].(string)
 		logger.ZapLogger.Info("user id: " + id)
 		status, reply := userService.FindOneUser(id, ctx.Context())
-		if status >= 400 {
-			return  ctx.Status(status).JSON(fiber.Map{"error": reply})
+		if status == 404 {
+			return  ctx.Status(401).JSON(fiber.Map{"error": "your user doesn't exist"})
 		}
 		updatedAt := user["updatedAt"]
 		timestamp, ok := updatedAt.(string)

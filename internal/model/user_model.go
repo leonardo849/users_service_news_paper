@@ -16,6 +16,7 @@ type UserModel struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	IsActive     bool `gorm:"default:true" json:"is_active"`
+	Role string `gorm:"default:'CUSTOMER';not null"`
 }
 
 func (u *UserModel) BeforeCreate(tx *gorm.DB) (err error) {
