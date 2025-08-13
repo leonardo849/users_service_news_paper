@@ -5,4 +5,6 @@ In config, create the ".env" file
 APP_ENV: string
 DATABASE_URI: string
 PORT: string
-
+SECRETWORDJWT: string
+REDIS_URI: string
+REDIS_DATABASE: string (number in string)
