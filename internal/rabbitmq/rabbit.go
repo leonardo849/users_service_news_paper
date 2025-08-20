@@ -14,18 +14,19 @@ import (
 var isRabbitMQon = false
 
 
+type clientI interface {
+	Publish(queue string, message string) error
+	CloseRabbit()
+}
+
 type client struct {
 	conn *amqp.Connection
 	ch *amqp.Channel
 }
 
-func (c *client) CloseRabbit() {
-	c.ch.Close()
-	c.conn.Close()
-	logger.ZapLogger.Info("closing rabbitmq")
-}
 
-var RabbitClient *client
+
+var rabbitClient *client
 
 func ConnectToRabbitMQ() (*client, error) {
 	isRabbitOn := strings.ToLower(os.Getenv("RABBIT_ON"))
@@ -65,7 +66,53 @@ func ConnectToRabbitMQ() (*client, error) {
 		conn: conn,
 		ch: ch,
 	}
-	RabbitClient = client
+	rabbitClient = client
 	return client, nil
 }
 
+func (c *client) Publish(queue string, message string) error {
+	if c.ch == nil {
+		logger.ZapLogger.Error("channel doesn't exist")
+		return fmt.Errorf("channel doesn't exist")
+	}
+	return  c.ch.Publish(
+		"",
+		queue,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body: []byte(message),
+		},
+	)
+}
+
+
+func (c *client) CloseRabbit() {
+	c.ch.Close()
+	c.conn.Close()
+	logger.ZapLogger.Info("closing rabbitmq")
+}
+
+type fakeClient struct {
+	
+}
+
+func (c *fakeClient) Publish(queue string, message string) error {
+	log := "[fake] publish: queue " + queue + "message "  + message 
+	logger.ZapLogger.Info(log)
+	return  nil
+}
+
+func (c *fakeClient) CloseRabbit()  {
+	logger.ZapLogger.Info("[fake] closing rabbit")
+}
+
+
+func GetRabbitMQClient() clientI {
+	if isRabbitMQon && rabbitClient != nil {
+		return  rabbitClient
+	} else {
+		return  &fakeClient{}
+	}
+}
