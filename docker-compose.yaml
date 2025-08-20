@@ -10,6 +10,7 @@ services:
       - SECRETWORDJWT=ba72f4da0bf07a8483781f2a6d39d933ac010720
       - REDIS_URI=redis:6379
       - REDIS_DATABASE=1
+      - SECOND_DELAY=1
     depends_on:
       - db
       - redis
