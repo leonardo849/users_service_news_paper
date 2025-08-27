@@ -16,7 +16,7 @@ func SameIdOrRole(roles []string) fiber.Handler {
 		idJwt := user["id"].(string)
 		role := user["role"].(string)
 		logger.ZapLogger.Info(fmt.Sprintf("searched id: %s. user's id: %s", id, idJwt))
-		if id != idJwt && !funk.Contains(roles, role){
+		if id != idJwt && !funk.Contains(roles, role) && len(roles) > 0{
 			return ctx.Status(403).JSON(fiber.Map{"error": "searched id and your id aren't the same id"})
 		}
 		return ctx.Next()

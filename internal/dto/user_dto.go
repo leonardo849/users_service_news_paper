@@ -28,3 +28,9 @@ type LoginUserDTO struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type UpdateUserDTO struct {
+	Username *string `json:"username" validate:"omitempty,max=50"`
+	Email    *string `json:"email" validate:"omitempty,max=100,email"`
+	Fullname *string `json:"fullname" validate:"omitempty,max=100"`
+}

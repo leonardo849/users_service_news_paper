@@ -6,6 +6,7 @@ import (
 	"users-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
@@ -88,5 +89,36 @@ func (u *UserController) LoginUser() fiber.Handler {
 			return  ctx.Status(status).JSON(fiber.Map{"error": reply})
 		}
 		return  ctx.Status(status).JSON(reply)
+	}
+}
+
+
+// @Summary Update User
+// @Description update user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "user ID"
+// @Param user body dto.UpdateUserDTO true "user data"   
+// @Success 200 {object} dto.MessageDTO
+// @Failure 400 {object} dto.ErrorDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Router /users/update/{id} [put]
+func (u *UserController) UpdateOneUser() fiber.Handler {
+	return  func(ctx*fiber.Ctx) error {
+		mapClaims := ctx.Locals("user").(jwt.MapClaims)
+		user := map[string]interface{}(mapClaims)
+		id := user["id"].(string)
+		var input dto.UpdateUserDTO
+		if err := ctx.BodyParser(&input); err != nil {
+			logger.ZapLogger.Error("error in body parser", zap.Error(err), zap.String("function", "user controller.updateoneuser"))
+			return  ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		status, reply := u.UserService.UpdateUser(input, ctx.Context(), id)
+		if status >= 400 {
+			logger.ZapLogger.Error("error in user service update user", zap.String("function", "user controller.updateoneuser"))
+			return  ctx.Status(status).JSON(fiber.Map{"error": reply})
+		}
+		return  ctx.Status(status).JSON(fiber.Map{"message": reply})
 	}
 }

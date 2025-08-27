@@ -19,5 +19,6 @@ func setupUserRoutes(userGroup fiber.Router) {
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{helper.Ceo, helper.Master}) ,userController.FindOneUser())
+	userGroup.Put("/update/:id", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{}), userController.UpdateOneUser())
 	logger.ZapLogger.Info("user routes are running!")
 }

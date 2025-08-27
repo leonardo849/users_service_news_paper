@@ -141,6 +141,46 @@ func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) 
 	}
 }
 
+func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Context ,id string) (status int, message interface{}) {
+	if err := validate.Validate.Struct(input); err != nil {
+		logger.ZapLogger.Error("error in validate input", zap.Error(err))
+		return 400, err.Error()
+	}
+
+	fields := map[string]interface{}{}
+
+	if input.Username != nil {
+		fields["username"] = *input.Username
+	}
+	if input.Email != nil {
+		fields["email"] = *input.Email
+	}
+	if input.Fullname != nil {
+		fields["fullname"] = *input.Fullname
+	}
+
+
+	if result := u.db.Model(&model.UserModel{}).Where("id = ?", id).Updates(fields); result.Error != nil {
+		logger.ZapLogger.Error("error in update user", zap.Error(result.Error))
+		return 500, result.Error.Error()
+	}
+	sts, msg := u.FindOneUser(id, fiberCtx)
+	if sts >= 400 {
+		return sts, msg
+	}
+	user, ok := msg.(dto.FindUserDTO)
+	if !ok {
+		logger.ZapLogger.Error("error in message to dto.finduserdto")
+	} else {
+		if err := u.userServiceRedis.SetUser(user, fiberCtx); err != nil {
+			logger.ZapLogger.Error("error in set user in redis")
+		} else {
+			logger.ZapLogger.Info("updated user was setted in redis")
+		}
+	}
+	return 200, "user was updated"
+}
+
 func (u *UserService) IsDBnil() bool {
 	return u.db == nil
 }

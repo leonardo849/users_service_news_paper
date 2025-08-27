@@ -62,6 +62,23 @@ definitions:
       password:
         type: string
     type: object
+  dto.MessageDTO:
+    properties:
+      string:
+        type: string
+    type: object
+  dto.UpdateUserDTO:
+    properties:
+      email:
+        maxLength: 100
+        type: string
+      fullname:
+        maxLength: 100
+        type: string
+      username:
+        maxLength: 50
+        type: string
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -164,6 +181,41 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorDTO'
       summary: Find One User
+      tags:
+      - users
+  /users/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: update user
+      parameters:
+      - description: user ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: user data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Update User
       tags:
       - users
 swagger: "2.0"

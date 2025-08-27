@@ -76,3 +76,15 @@ func TestFindOneUser(t *testing.T) {
     Status(200).
     JSON().Object()
 }
+
+func TestUpdateOneUser(t *testing.T) {
+	e := newExpect(t)
+	e.PUT("/users/update/" + idInput). 
+	WithJSON(map[string]string{
+		"username": input.Username + "3234",
+	}). 
+	WithHeader("Authorization", "Bearer " + token).
+	Expect().
+	Status(200). 
+	JSON().Object()
+}
