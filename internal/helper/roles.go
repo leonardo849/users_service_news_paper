@@ -4,5 +4,6 @@ const Master = "MASTER"
 const Ceo = "CEO"
 const Journalist = "JOURNALIST"
 const Developer = "DEVElOPER"
+const Customer = "CUSTOMER"
 
-var Roles [4]string = [4]string{Master, Ceo, Journalist, Developer}
+var Roles [5]string = [5]string{Master, Ceo, Journalist, Developer, Customer}

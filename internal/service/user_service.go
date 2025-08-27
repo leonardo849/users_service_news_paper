@@ -131,7 +131,7 @@ func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) 
 		return 401, "password is wrong"
 	}
 
-	jwt, err := helper.GenerateJWT(user.ID.String(), user.UpdatedAt, user.Email)
+	jwt, err := helper.GenerateJWT(user.ID.String(), user.UpdatedAt, user.Email, user.Role)
 	if err != nil {
 		logger.ZapLogger.Error("internal server in generate jwt", zap.String("function", "userService.loginuser"), zap.Error(err))
 		return 500, err.Error()

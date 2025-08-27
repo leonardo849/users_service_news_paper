@@ -2,6 +2,7 @@ package router
 
 import (
 	"users-service/internal/handler"
+	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
 	"users-service/internal/redis"
@@ -17,6 +18,6 @@ func setupUserRoutes(userGroup fiber.Router) {
 	userController := handler.UserController{UserService: userService}
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Post("/login", userController.LoginUser())
-	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired() ,userController.FindOneUser())
+	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{helper.Ceo, helper.Master}) ,userController.FindOneUser())
 	logger.ZapLogger.Info("user routes are running!")
 }

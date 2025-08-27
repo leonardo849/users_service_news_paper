@@ -12,7 +12,7 @@ import (
 
 
 
-func GenerateJWT(id string, updatedAt time.Time, email string) (string, error){
+func GenerateJWT(id string, updatedAt time.Time, email string, role string) (string, error){
 	if config.Key == "" {
 		logger.ZapLogger.Error("secret word jwt is empty", zap.String("function", "generate jwt"))
 		return  "", fmt.Errorf("secret word jwt is empty")
@@ -22,6 +22,7 @@ func GenerateJWT(id string, updatedAt time.Time, email string) (string, error){
         "id": id,
 		"updatedAt": updatedAt,
 		"email": email,
+		"role": role,
 		"exp": time.Now().Add((time.Hour * 24) * 30).Unix(),
     })
 

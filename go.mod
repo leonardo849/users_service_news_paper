@@ -70,6 +70,7 @@ require (
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/swaggo/files/v2 v2.0.2 // indirect
+	github.com/thoas/go-funk v0.9.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.64.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
