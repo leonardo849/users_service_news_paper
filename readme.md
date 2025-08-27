@@ -13,3 +13,4 @@ In config, create the ".env" file
 - EMAIL_JHONDOE: string
 - PASSWORD_JHONDOE: string
 - SECOND_DELAY: string
+- REDIS_PASSWORD: string
