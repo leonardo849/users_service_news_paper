@@ -10,3 +10,5 @@ In config, create the ".env" file
 - REDIS_DATABASE: string (number in string)
 - RABBIT_URI: string
 - RABBIT_ON: string (boolean in string)
+- EMAIL_JHONDOE: string
+- SECOND_DELAY: string
