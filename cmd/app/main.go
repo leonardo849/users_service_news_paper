@@ -37,7 +37,7 @@ func main() {
 		logger.ZapLogger.Error("error in connect to redis", zap.String("function", "redis.ConnectToRedis"), zap.Error(err))
 		os.Exit(1)
 	}
-	if _, err := rabbitmq.ConnectToRabbitMQ(); err != nil {
+	if  err := rabbitmq.ConnectToRabbitMQ(); err != nil {
 		logger.ZapLogger.Error("error in connect to rabbit", zap.String("function", "rabbitmq.connectorabbitmq"), zap.Error(err))
 	}
 

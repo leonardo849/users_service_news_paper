@@ -28,14 +28,14 @@ type client struct {
 
 var rabbitClient *client
 
-func ConnectToRabbitMQ() (*client, error) {
+func ConnectToRabbitMQ() (error) {
 	isRabbitOn := strings.ToLower(os.Getenv("RABBIT_ON"))
 	if isRabbitOn == "true" {
 		isRabbitMQon = true 
 	} 
 	logger.ZapLogger.Info("Is rabbit going to be on?", zap.Bool("rabbit value", isRabbitMQon))
 	if !isRabbitMQon {
-		return  nil, fmt.Errorf("rabbit mq is going to be off")
+		return  fmt.Errorf("rabbit mq is going to be off")
 	}
 
 	
@@ -44,13 +44,13 @@ func ConnectToRabbitMQ() (*client, error) {
 	if uriRabbit == "" {
 		err := fmt.Errorf("rabbit_uri is empty")
 		logger.ZapLogger.Error("error in get rabbit uri", zap.Error(err))
-		return nil, err
+		return err
 	}
 	
 	conn, err := amqp.Dial(uriRabbit)
 	if err != nil {
 		logger.ZapLogger.Error("error in Connect To rabbit mq", zap.Error(err))
-		return nil, err
+		return err
 	}
 	logger.ZapLogger.Info("conn is estabilished")
 	ch, err := conn.Channel()
@@ -58,7 +58,7 @@ func ConnectToRabbitMQ() (*client, error) {
 		conn.Close()
 		logger.ZapLogger.Info("closing conn")
 	 	logger.ZapLogger.Error("error in get channel", zap.Error(err))
-	 	return  nil, err
+	 	return  err
 	}
 	logger.ZapLogger.Info("channel is ready")
 
@@ -67,7 +67,7 @@ func ConnectToRabbitMQ() (*client, error) {
 		ch: ch,
 	}
 	rabbitClient = client
-	return client, nil
+	return nil
 }
 
 func (c *client) Publish(queue string, message string) error {
@@ -94,19 +94,6 @@ func (c *client) CloseRabbit() {
 	logger.ZapLogger.Info("closing rabbitmq")
 }
 
-type fakeClient struct {
-	
-}
-
-func (c *fakeClient) Publish(queue string, message string) error {
-	log := "[fake] publish: queue " + queue + "message "  + message 
-	logger.ZapLogger.Info(log)
-	return  nil
-}
-
-func (c *fakeClient) CloseRabbit()  {
-	logger.ZapLogger.Info("[fake] closing rabbit")
-}
 
 
 func GetRabbitMQClient() clientI {
