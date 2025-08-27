@@ -11,4 +11,5 @@ In config, create the ".env" file
 - RABBIT_URI: string
 - RABBIT_ON: string (boolean in string)
 - EMAIL_JHONDOE: string
+- PASSWORD_JHONDOE: string
 - SECOND_DELAY: string
