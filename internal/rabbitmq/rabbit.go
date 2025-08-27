@@ -3,6 +3,8 @@ package rabbitmq
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 	"users-service/internal/logger"
 
 	"strings"
@@ -46,12 +48,33 @@ func ConnectToRabbitMQ() (error) {
 		logger.ZapLogger.Error("error in get rabbit uri", zap.Error(err))
 		return err
 	}
-	
-	conn, err := amqp.Dial(uriRabbit)
-	if err != nil {
-		logger.ZapLogger.Error("error in Connect To rabbit mq", zap.Error(err))
-		return err
+	var conn *amqp.Connection
+	const maxTries = 11
+	secondDelay := os.Getenv("SECOND_DELAY")
+	var secondInt int
+	var err error
+	if secondDelay == "" {
+		secondInt = 1
+	} else {
+		secondInt, err = strconv.Atoi(secondDelay)
+		if err != nil {
+			secondInt = 1
+		} 
 	}
+	for i := 0; i < maxTries; i++ {
+		conn, err = amqp.Dial(uriRabbit)
+		if err != nil {
+			logger.ZapLogger.Error("error in Connect To rabbit mq", zap.Error(err))
+			time.Sleep(time.Duration(secondInt) * time.Second)
+			if i == maxTries - 1 {
+				return  err
+			}
+		} else {
+			break
+		}
+
+	}
+	
 	logger.ZapLogger.Info("conn is estabilished")
 	ch, err := conn.Channel()
 	if err != nil {
