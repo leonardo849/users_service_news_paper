@@ -28,10 +28,12 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
+          --requirepass mypassword
+          --health-cmd "redis-cli -a mypassword ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        
 
 
     steps:
@@ -55,4 +57,5 @@ jobs:
           RABBIT_ON: false
           EMAIL_JHONDOE: ${{ secrets.EMAIL_JHONDOE }}
           PASSWORD_JHONDOE: ${{ secrets.PASSWORD_JHONDOE }} 
+          REDIS_PASSWORD: mypassword
         run: go test ./... -v
