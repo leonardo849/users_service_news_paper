@@ -67,6 +67,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	cleanDatabases(db, redisClient)
 	sqldb.Close()
+	redisClient.Close()
 	
 	os.Exit(code)
 }

@@ -6,6 +6,7 @@ import (
 	"users-service/config"
 	"users-service/internal/logger"
 	"users-service/internal/prometheus"
+	"users-service/internal/rabbitmq"
 	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/router"
@@ -35,6 +36,9 @@ func main() {
 	if _, err := redis.ConnectToRedis(); err != nil {
 		logger.ZapLogger.Error("error in connect to redis", zap.String("function", "redis.ConnectToRedis"), zap.Error(err))
 		os.Exit(1)
+	}
+	if  err := rabbitmq.ConnectToRabbitMQ(); err != nil {
+		logger.ZapLogger.Error("error in connect to rabbit", zap.String("function", "rabbitmq.connectorabbitmq"), zap.Error(err))
 	}
 
 	prometheus.StartPrometheus()
