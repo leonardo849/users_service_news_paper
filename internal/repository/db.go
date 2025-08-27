@@ -10,7 +10,6 @@ import (
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
-	_ "users-service/internal/model"
 	"users-service/internal/validate"
 
 	"time"
