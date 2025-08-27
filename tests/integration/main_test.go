@@ -46,6 +46,7 @@ func TestMain(m *testing.M) {
 	if err = logger.StartLogger(); err != nil {
 		log.Panic(err.Error())
 	}
+	validate.StartValidator()
 	db, err := repository.ConnectToDatabase()
 	if err != nil {
 		log.Panic(err.Error())
@@ -54,7 +55,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	validate.StartValidator()
+	
 	
 	DB = db
 	app = router.SetupApp()

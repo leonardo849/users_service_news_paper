@@ -29,6 +29,8 @@ func main() {
 	if err := logger.StartLogger(); err != nil {
 		log.Fatal(err.Error())
 	}
+	prometheus.StartPrometheus()
+	validate.StartValidator()
 	if _,err := repository.ConnectToDatabase(); err != nil {
 		logger.ZapLogger.Error("error in repository.connectodatabase", zap.String("function", "repository.ConnectToDatabase()"), zap.Error(err))
 		os.Exit(1)
@@ -41,8 +43,7 @@ func main() {
 		logger.ZapLogger.Error("error in connect to rabbit", zap.String("function", "rabbitmq.connectorabbitmq"), zap.Error(err))
 	}
 
-	prometheus.StartPrometheus()
-	validate.StartValidator()
+	
 
 
 
