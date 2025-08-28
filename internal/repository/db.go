@@ -28,7 +28,7 @@ func ConnectToDatabase() (*gorm.DB, error) {
 		logger.ZapLogger.Error("there isn't dsn")
 		return nil, fmt.Errorf("there isn't dsn")
 	}
-	const maxTries = 11
+	const maxTries = 20
 	secondDelay := os.Getenv("SECOND_DELAY")
 	var secondInt int
 	var db *gorm.DB

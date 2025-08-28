@@ -10,10 +10,14 @@ services:
       - SECRETWORDJWT=ba72f4da0bf07a8483781f2a6d39d933ac010720
       - REDIS_URI=redis:6379
       - REDIS_DATABASE=1
-      - SECOND_DELAY=1
+      - SECOND_DELAY=2
+      - EMAIL_JHONDOE=jhondoe@gmail.com
+      - PASSWORD_JHONDOE=70UwP6M+5;
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   db:
     image: postgres:latest 
@@ -23,6 +27,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: newspaper_users
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d newspaper_users"]
+      interval: 5s
+      retries: 10
     volumes:
       - pgdata2:/var/lib/postgresql/data
 
@@ -32,6 +40,10 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
 
 volumes:
   pgdata2:
