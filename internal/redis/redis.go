@@ -16,9 +16,9 @@ func ConnectToRedis() (*redis.Client, error) {
 	uriRedis := os.Getenv("REDIS_URI")
 	databaseRedis := os.Getenv("REDIS_DATABASE")
 	redisPassword := os.Getenv("REDIS_PASSWORD")
-	if uriRedis == "" || databaseRedis == "" || redisPassword == ""{
-		err := fmt.Errorf("uri to redis or redis database or redis password is empty")
-		logger.ZapLogger.Error("uri to redis or redis database or redis password is empty", zap.String("function", "connectToRedis"))
+	if uriRedis == "" || databaseRedis == "" {
+		err := fmt.Errorf("uri to redis or redis database  is empty")
+		logger.ZapLogger.Error("uri to redis or redis database is empty", zap.String("function", "connectToRedis"))
 		return nil, err
 	}
 	dbInt, err := strconv.Atoi(databaseRedis)
