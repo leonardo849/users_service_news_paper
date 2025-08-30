@@ -90,7 +90,7 @@ func createJhonDoe(db *gorm.DB) error {
 	ctx := context.Background()
 	const username = "Jhon"
 	const name = "Jhon Doe"
-	_, err := gorm.G[model.UserModel](db).Where(&model.UserModel{Username: username, FullName: name, Email: chosenEmail}).First(ctx)
+	_, err := gorm.G[model.UserModel](db).Where(&model.UserModel{Username: username, FullName: name, Email: chosenEmail, Role: helper.Master}).First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			dto := dto.CreateUserDTO{

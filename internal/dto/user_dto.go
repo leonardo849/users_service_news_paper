@@ -34,3 +34,7 @@ type UpdateUserDTO struct {
 	Email    *string `json:"email" validate:"omitempty,max=100,email"`
 	Fullname *string `json:"fullname" validate:"omitempty,max=100"`
 }
+
+type UpdateUserRoleDTO struct {
+	Role string `json:"role" validate:"required,role"`
+}

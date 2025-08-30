@@ -181,6 +181,31 @@ func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Conte
 	return 200, "user was updated"
 }
 
+func (u *UserService) UpdateUserRole(input dto.UpdateUserRoleDTO, fiberCtx context.Context, id string) (status int, message interface{}) {
+	if err := validate.Validate.Struct(input); err != nil {
+		return 400, err.Error()
+	}
+	_, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).Update(fiberCtx, "role", input.Role)
+	if err != nil {
+		return 500, err.Error()
+	}
+	sts, msg := u.FindOneUser(id, fiberCtx)
+	if sts >= 400 {
+		return sts, msg
+	}
+	user, ok := msg.(dto.FindUserDTO)
+	if !ok {
+		logger.ZapLogger.Error("error in message to dto.finduserdto")
+	} else {
+		if err := u.userServiceRedis.SetUser(user, fiberCtx); err != nil {
+			logger.ZapLogger.Error("error in set user in redis")
+		} else {
+			logger.ZapLogger.Info("updated user was setted in redis")
+		}
+	}
+	return 200, "user was updated"
+}
+
 func (u *UserService) IsDBnil() bool {
 	return u.db == nil
 }
