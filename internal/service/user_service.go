@@ -183,10 +183,12 @@ func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Conte
 
 func (u *UserService) UpdateUserRole(input dto.UpdateUserRoleDTO, fiberCtx context.Context, id string) (status int, message interface{}) {
 	if err := validate.Validate.Struct(input); err != nil {
+		logger.ZapLogger.Error("error in validate struct", zap.Error(err), zap.String("function", "userservice.updateuserrole"))
 		return 400, err.Error()
 	}
 	_, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).Update(fiberCtx, "role", input.Role)
 	if err != nil {
+		logger.ZapLogger.Error("error in update role", zap.Error(err), zap.String("function", "userservice.updateuserrole"))
 		return 500, err.Error()
 	}
 	sts, msg := u.FindOneUser(id, fiberCtx)

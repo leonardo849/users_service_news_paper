@@ -122,3 +122,33 @@ func (u *UserController) UpdateOneUser() fiber.Handler {
 		return  ctx.Status(status).JSON(fiber.Map{"message": reply})
 	}
 }
+
+
+// @Summary Update User Role
+// @Description update user role
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "user ID"
+// @Param user body dto.UpdateUserRoleDTO true "user data"   
+// @Success 200 {object} dto.MessageDTO
+// @Failure 400 {object} dto.ErrorDTO
+// @Failure 404 {object} dto.ErrorDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Router /users/update/role/{id} [patch]
+func (u *UserController) UpdateOneUserRole() fiber.Handler {
+	return  func(ctx *fiber.Ctx) error {
+		id := ctx.Params("id")
+		var input dto.UpdateUserRoleDTO
+		if err := ctx.BodyParser(&input); err != nil {
+			logger.ZapLogger.Error("error in body parser", zap.Error(err), zap.String("function", "usercontroller.updateoneuserrole"))
+			return  ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+		status, reply := u.UserService.UpdateUserRole(input, ctx.Context(), id)
+		if status >= 400 {
+			logger.ZapLogger.Error("error in user service update user", zap.String("function", "user controller.updateoneuser"))
+			return  ctx.Status(status).JSON(fiber.Map{"error": reply})
+		}
+		return  ctx.Status(status).JSON(fiber.Map{"message": reply})
+	}
+}
