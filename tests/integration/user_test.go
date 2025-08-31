@@ -107,6 +107,7 @@ func TestUpdateOneUser(t *testing.T) {
 	JSON().Object()
 }
 
+
 func TestUpdateOneUserRole(t *testing.T) {
 	e := newExpect(t)
 	e.PATCH("/users/update/role/" + idInput). 
@@ -117,4 +118,12 @@ func TestUpdateOneUserRole(t *testing.T) {
 	Expect(). 
 	Status(200). 
 	JSON().Object()
+}
+
+func TestMetrics(t *testing.T) {
+	e := newExpect(t)
+	e.GET("/metrics"). 
+	WithHeader("Authorization", "Bearer " + tokenJhonDoe). 
+	Expect().
+	Status(200)
 }
