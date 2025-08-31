@@ -102,6 +102,7 @@ func (u *UserController) LoginUser() fiber.Handler {
 // @Param user body dto.UpdateUserDTO true "user data"   
 // @Success 200 {object} dto.MessageDTO
 // @Failure 400 {object} dto.ErrorDTO
+// @Failure 404 {object} dto.ErrorDTO
 // @Failure 500 {object} dto.ErrorDTO
 // @Router /users/update/{id} [put]
 func (u *UserController) UpdateOneUser() fiber.Handler {
