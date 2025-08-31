@@ -75,7 +75,6 @@ func TestLoginUser(t *testing.T) {
 
 	chosenEmail := os.Getenv("EMAIL_JHONDOE")
 	chosenPassword := os.Getenv("PASSWORD_JHONDOE")
-	
 	res = e.POST("/users/login"). 
 	WithJSON(map[string]string{
 		"email": chosenEmail,

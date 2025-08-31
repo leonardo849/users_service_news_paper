@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,7 +29,7 @@ type fiberRoundTripper struct {
 	app *fiber.App
 }
 
-
+var emailJhonDoe string
 
 
 
@@ -43,9 +44,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+	emailJhonDoe = os.Getenv("EMAIL_JHONDOE")
 	if err = logger.StartLogger(); err != nil {
 		log.Panic(err.Error())
 	}
+	
 	validate.StartValidator()
 	db, err := repository.ConnectToDatabase()
 	if err != nil {
@@ -64,9 +67,9 @@ func TestMain(m *testing.M) {
 		log.Panic(err.Error())
 	}
 	
-	cleanDatabases(db, redisClient)
+	cleanDatabases(db, redisClient, false)
 	code := m.Run()
-	cleanDatabases(db, redisClient)
+	cleanDatabases(db, redisClient, true)
 	sqldb.Close()
 	redisClient.Close()
 	
@@ -84,8 +87,13 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client) {
-	db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
+func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client, isTheEnd bool) {
+	if !isTheEnd {
+		db.Where("email != ?", emailJhonDoe).Delete(&model.UserModel{})
+	} else {
+		db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
+	}
+	logger.ZapLogger.Info(fmt.Sprintf("all of users which doesn't have that email: %s were deleted", emailJhonDoe))
 	redisClient.FlushDB(context.Background())
 }
 
