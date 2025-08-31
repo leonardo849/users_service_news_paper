@@ -2,12 +2,15 @@ package integration_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"users-service/config"
+	"users-service/internal/dto"
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	_ "users-service/internal/model"
@@ -19,6 +22,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofiber/fiber/v2"
 	redisLib "github.com/redis/go-redis/v9"
+	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
 )
 
@@ -37,6 +41,7 @@ func (rt fiberRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	return rt.app.Test(req)
 }
 
+var users []dto.CreateUserFromJsonFileDTO
 var DB *gorm.DB
 
 func TestMain(m *testing.M) {
@@ -44,7 +49,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
-	emailJhonDoe = os.Getenv("EMAIL_JHONDOE")
 	if err = logger.StartLogger(); err != nil {
 		log.Panic(err.Error())
 	}
@@ -67,9 +71,13 @@ func TestMain(m *testing.M) {
 		log.Panic(err.Error())
 	}
 	
-	cleanDatabases(db, redisClient, false)
+	if err := cleanDatabases(db, redisClient, false); err != nil {
+		log.Panic(err.Error())
+	}
 	code := m.Run()
-	cleanDatabases(db, redisClient, true)
+	if err := cleanDatabases(db, redisClient, true); err != nil {
+		log.Panic(err.Error())
+	}
 	sqldb.Close()
 	redisClient.Close()
 	
@@ -87,14 +95,28 @@ func newExpect(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client, isTheEnd bool) {
+func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client, isTheEnd bool) error {
+	
+ 	projectRoot := config.FindProjectRoot()
+	envPath := filepath.Join(projectRoot, "config", "users.json")
+	data, err := os.ReadFile(envPath)
+	if err != nil {
+		return  err
+	}
+	if err := json.Unmarshal(data, &users); err != nil {
+		return  err
+	}
+	emails := funk.Map(users, func(users dto.CreateUserFromJsonFileDTO) string {
+		return  users.Email
+	}).([]string)
 	if !isTheEnd {
-		db.Where("email != ?", emailJhonDoe).Delete(&model.UserModel{})
+		db.Where("email NOT IN ?", emails).Delete(&model.UserModel{})
 	} else {
 		db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
 	}
 	logger.ZapLogger.Info(fmt.Sprintf("all of users which doesn't have that email: %s were deleted", emailJhonDoe))
 	redisClient.FlushDB(context.Background())
+	return  nil
 }
 
 func TestMessage(t *testing.T) {

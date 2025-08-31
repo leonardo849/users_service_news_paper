@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"users-service/config"
+	"users-service/internal/dto"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
@@ -132,15 +133,9 @@ func createAccounts(db *gorm.DB) error {
 	// }
 	// return nil
 
-	type CreateUserFromJsonFileDTO struct {
-		Username string `json:"username" validate:"required,max=50"`
-		Email    string `json:"email" validate:"required,max=100,email"`
-		Password string `json:"password" validate:"required,strongpassword"`
-		Fullname string `json:"fullname" validate:"required,max=100"`
-		Role string `json:"role" validate:"required,role"`
-	}
+	
 
-	var users []CreateUserFromJsonFileDTO
+	var users []dto.CreateUserFromJsonFileDTO
  	projectRoot := config.FindProjectRoot()
 	if projectRoot == "" {
 		return  os.ErrNotExist

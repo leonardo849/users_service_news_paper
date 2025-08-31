@@ -38,3 +38,11 @@ type UpdateUserDTO struct {
 type UpdateUserRoleDTO struct {
 	Role string `json:"role" validate:"required,role"`
 }
+
+type CreateUserFromJsonFileDTO struct {
+	Username string `json:"username" validate:"required,max=50"`
+	Email    string `json:"email" validate:"required,max=100,email"`
+	Password string `json:"password" validate:"required,strongpassword"`
+	Fullname string `json:"fullname" validate:"required,max=100"`
+	Role string `json:"role" validate:"required,role"`
+}
