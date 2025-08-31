@@ -2,11 +2,13 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
-	"users-service/internal/dto"
+	"users-service/config"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
@@ -62,9 +64,9 @@ func ConnectToDatabase() (*gorm.DB, error) {
 		logger.ZapLogger.Error("serror in migrate models")
 		return nil, err
 	}
-	err = createJhonDoe(db)
+	err = createAccounts(db)
 	if err != nil {
-		logger.ZapLogger.Error("error in create jhon doe account")
+		logger.ZapLogger.Error("error in create accounts")
 		return  nil, err
 	}
 	return db, nil
@@ -79,54 +81,115 @@ func migrateModels(db *gorm.DB) error {
 	return nil
 }
 
-func createJhonDoe(db *gorm.DB) error {
+func createAccounts(db *gorm.DB) error {
 
-	chosenEmail := os.Getenv("EMAIL_JHONDOE")
-	chosenPassword := os.Getenv("PASSWORD_JHONDOE")
-	if chosenEmail == "" || chosenPassword == "" {
-		logger.ZapLogger.Error("the jhondoe's password or jhondoe's email is empty", zap.Error(fmt.Errorf("the jhondoe's password or jhondoe's email is empty")))
-		return fmt.Errorf("the jhondoe's password or jhondoe's email is empty")
+	// chosenEmail := os.Getenv("EMAIL_JHONDOE")
+	// chosenPassword := os.Getenv("PASSWORD_JHONDOE")
+	// if chosenEmail == "" || chosenPassword == "" {
+	// 	logger.ZapLogger.Error("the jhondoe's password or jhondoe's email is empty", zap.Error(fmt.Errorf("the jhondoe's password or jhondoe's email is empty")))
+	// 	return fmt.Errorf("the jhondoe's password or jhondoe's email is empty")
+	// }
+	// ctx := context.Background()
+	// const username = "Jhon"
+	// const name = "Jhon Doe"
+	// _, err := gorm.G[model.UserModel](db).Where(&model.UserModel{Username: username, FullName: name, Email: chosenEmail, Role: helper.Master}).First(ctx)
+	// if err != nil {
+	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 		dto := dto.CreateUserDTO{
+	// 			Username: username,
+	// 			Email:    chosenEmail,
+	// 			Password: chosenPassword,
+	// 			Fullname: name,
+	// 		}
+	// 		if err := validate.Validate.Struct(dto); err != nil {
+	// 			logger.ZapLogger.Error("error in validate struct dto", zap.Error(err))
+	// 			return err
+	// 		}
+	// 		hash, err := helper.StringToHash(dto.Password)
+	// 		if err != nil {
+	// 			logger.ZapLogger.Error("error in string to hash", zap.Error(err))
+	// 			return err
+	// 		}
+	// 		user := model.UserModel{
+	// 			Username: dto.Username,
+	// 			Email:    dto.Email,
+	// 			Password: hash,
+	// 			FullName: dto.Fullname,
+	// 			Role:     helper.,
+	// 			IsActive: true,
+	// 		}
+	// 		err = gorm.G[model.UserModel](db).Create(ctx, &user)
+	// 		if err != nil {
+	// 			logger.ZapLogger.Error("error in create jhon doe", zap.Error(err))
+	// 			return err
+	// 		}
+	// 		logger.ZapLogger.Info("jhon doe account was created")
+	// 		return  nil
+	// 	} else {
+	// 		logger.ZapLogger.Error("error", zap.Error(err))
+	// 		return  err
+	// 	}
+	// }
+	// return nil
+
+	type CreateUserFromJsonFileDTO struct {
+		Username string `json:"username" validate:"required,max=50"`
+		Email    string `json:"email" validate:"required,max=100,email"`
+		Password string `json:"password" validate:"required,strongpassword"`
+		Fullname string `json:"fullname" validate:"required,max=100"`
+		Role string `json:"role" validate:"required,role"`
 	}
-	ctx := context.Background()
-	const username = "Jhon"
-	const name = "Jhon Doe"
-	_, err := gorm.G[model.UserModel](db).Where(&model.UserModel{Username: username, FullName: name, Email: chosenEmail, Role: helper.Master}).First(ctx)
+
+	var users []CreateUserFromJsonFileDTO
+ 	projectRoot := config.FindProjectRoot()
+	if projectRoot == "" {
+		return  os.ErrNotExist
+	}
+	envPath := filepath.Join(projectRoot, "config", "users.json")
+	data, err := os.ReadFile(envPath)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			dto := dto.CreateUserDTO{
-				Username: username,
-				Email:    chosenEmail,
-				Password: chosenPassword,
-				Fullname: name,
-			}
-			if err := validate.Validate.Struct(dto); err != nil {
-				logger.ZapLogger.Error("error in validate struct dto", zap.Error(err))
-				return err
-			}
-			hash, err := helper.StringToHash(dto.Password)
-			if err != nil {
-				logger.ZapLogger.Error("error in string to hash", zap.Error(err))
-				return err
-			}
-			user := model.UserModel{
-				Username: dto.Username,
-				Email:    dto.Email,
-				Password: hash,
-				FullName: dto.Fullname,
-				Role:     helper.Master,
-				IsActive: true,
-			}
-			err = gorm.G[model.UserModel](db).Create(ctx, &user)
-			if err != nil {
-				logger.ZapLogger.Error("error in create jhon doe", zap.Error(err))
-				return err
-			}
-			logger.ZapLogger.Info("jhon doe account was created")
-			return  nil
-		} else {
-			logger.ZapLogger.Error("error", zap.Error(err))
+		return  err
+	}
+	if err := json.Unmarshal(data, &users); err != nil {
+		return  err
+	}
+	var usersModel []*model.UserModel
+	for i := 0; i < len(users); i++ {
+		newUser := users[i]
+		if err := validate.Validate.Struct(newUser); err != nil {
 			return  err
 		}
+		hash, err := helper.StringToHash(newUser.Password)
+		if err != nil {
+			return  err
+		}
+		newUserModel := model.UserModel{
+			Username: newUser.Username,
+			Password: hash,
+			Email: newUser.Email,
+			FullName: newUser.Fullname,
+			Role: newUser.Role,
+		}
+		_, err = gorm.G[model.UserModel](db).Where("username = ? OR email = ?", newUser.Username, newUser.Email).First(context.Background())
+		if err == nil {
+			logger.ZapLogger.Error(fmt.Sprintf("user with username %s or email %s were created", newUserModel.Username, newUserModel.Email), zap.Error(err),zap.String("function", "createAccounts"))
+			continue
+		} else if !errors.Is(err ,gorm.ErrRecordNotFound) {
+			logger.ZapLogger.Error("error in first", zap.Error(err), zap.String("function", "createaccounts"))
+			return  err
+		}
+
+		usersModel = append(usersModel, &newUserModel)
 	}
-	return nil
+
+	if len(usersModel) > 0 {
+		if err := db.Create(usersModel).Error; err != nil {
+			logger.ZapLogger.Error("error in create usersmodel", zap.Error(err), zap.String("function", "createaccounts"))
+			return err
+		}
+		logger.ZapLogger.Info("users were created")
+		return  nil
+	}
+	
+	return  nil
 }

@@ -34,7 +34,7 @@ func SetupApp() *fiber.App {
 		return ctx.Status(200).JSON(dto.MessageDTO{Message: "what's up"})
 	})
 
-	app.Get("/metrics", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.CheckRole([]string{helper.Ceo, helper.Master, helper.Developer}),  adaptor.HTTPHandler(promhttp.Handler()))
+	app.Get("/metrics", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.CheckRole([]string{helper.Ceo,  helper.Developer}),  adaptor.HTTPHandler(promhttp.Handler()))
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	logger.ZapLogger.Info("swagger is ready")

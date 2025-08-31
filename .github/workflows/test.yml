@@ -45,6 +45,11 @@ jobs:
       - name: install dependicies 
         run: go mod tidy
 
+      - name: create user.json file
+        env: 
+          USERS_JSON: ${{ secrets.USERS_JSON }}
+        run: echo "$USERS_JSON" > config/users.json
+
       - name: Run tests
         env:
           DATABASE_URI: postgres://user:password@localhost:5432/testdb?sslmode=disable

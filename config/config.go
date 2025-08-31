@@ -9,16 +9,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var errProjectRootNotFound = os.ErrNotExist
+
 var Key string
 
 func SetupEnvVar() error {
 	mode := strings.ToUpper(os.Getenv("APP_ENV"))
 	if mode == "" || mode == "DEV" {
 		log.Print("Dev mode")
-		projectRoot := findProjectRoot()
+		projectRoot := FindProjectRoot()
 		if projectRoot == "" {
-			return  errProjectRootNotFound
+			return  os.ErrNotExist
 		}
 		envPath := filepath.Join(projectRoot, "config", ".env")
 		err := godotenv.Load(envPath)
@@ -35,7 +35,7 @@ func SetupEnvVar() error {
 
 }
 
-func findProjectRoot() string {
+func FindProjectRoot() string {
 	dir, _ := os.Getwd()
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {

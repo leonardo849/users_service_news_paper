@@ -2,9 +2,7 @@ package model
 
 import (
 	"time"
-	"users-service/internal/helper"
-
-	"fmt"
+	
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -26,10 +24,3 @@ func (u *UserModel) BeforeCreate(tx *gorm.DB) (err error) {
  	return
 }
 
-func (u *UserModel) BeforeUpdate(tx *gorm.DB) (err error) {
-	if u.Role == helper.Master {
-		err = fmt.Errorf("that user can't be updated")
-		return err
-	}
-	return nil
-}

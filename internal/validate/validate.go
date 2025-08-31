@@ -10,8 +10,7 @@ import (
 )
 
 var Validate *validator.Validate
-var index int = funk.IndexOf(helper.Roles, helper.Master)
-var rolesWithoutMaster = append(helper.Roles[:index], helper.Roles[index + 1:]...)
+
 
 func strongPassword(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
@@ -42,7 +41,7 @@ func strongPassword(fl validator.FieldLevel) bool {
 
 func checkRole(fl validator.FieldLevel) bool {
 	role := fl.Field().String()
-	return  funk.Contains(rolesWithoutMaster, role)
+	return  funk.Contains(helper.Roles, role)
 }
 
 func StartValidator() {
