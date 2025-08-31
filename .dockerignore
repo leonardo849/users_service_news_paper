@@ -1,0 +1,4 @@
+/config/.env
+docker-compose.yaml
+*.md
+.github/
