@@ -19,6 +19,9 @@ func VerifyJWT() fiber.Handler {
 			return  ctx.Status(401).JSON(fiber.Map{"error": "there isn't token"})
 		}
 		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 {
+			return  ctx.Status(401).JSON(fiber.Map{"error": "your token is wrong"})
+		}
 		if parts[0] != "Bearer" {
 			return  ctx.Status(401).JSON(fiber.Map{"error": "the token is without the prefix 'bearer'"})
 		}
