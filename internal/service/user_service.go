@@ -141,7 +141,7 @@ func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (stat
 }
 
 func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) (status int, message interface{}) {
-	user, err := gorm.G[model.UserModel](u.db).Where("email = ?", dto.Email).First(fiberCtx)
+	user, err := gorm.G[model.UserModel](u.db).Where("email = ? AND is_active = ?", dto.Email, true).First(fiberCtx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.ZapLogger.Error("a user with that email doesn't exist", zap.Error(err), zap.String("function", "userService.loginuser"))
