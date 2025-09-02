@@ -5,7 +5,6 @@ import (
 	"users-service/internal/dto"
 	"users-service/internal/helper"
 
-	"log"
 	"github.com/thoas/go-funk"
 )
 
@@ -18,11 +17,11 @@ var inputDev = dto.CreateUserDTO{
 	Fullname: "User Test Dev 123",
 }
 
-var idInput string 
+
 
 func TestCreateUser(t *testing.T) {
 	e := newExpect(t)
-	res:= e.POST("/users/create"). 
+	e.POST("/users/create"). 
 	WithJSON(map[string]string{
 		"username": inputDev.Username,
 		"email": inputDev.Email,
@@ -30,8 +29,7 @@ func TestCreateUser(t *testing.T) {
 		"fullname": inputDev.Fullname,
 	}).Expect(). 
 	Status(201).JSON().Object()
-	idInput = res.Value("id").String().NotEmpty().Raw()
-	
+
 
 	e.POST("/users/create"). 
 	WithJSON(map[string]string{
@@ -147,7 +145,6 @@ func TestLoginJournalist(t *testing.T) {
 	if !ok {
 		t.Error("error in journalist[journalistFromJson] to dto.CreateUserFromJsonFileDTO")
 	}
-	log.Print(journalistFromJson.Email)
 	e := newExpect(t)
 	resp := e.POST("/users/login"). 
 	WithJSON(map[string]string{
@@ -160,7 +157,34 @@ func TestLoginJournalist(t *testing.T) {
 	dev["token"] = resp.Value("token").String().Raw()
 }
 
+
+var customer = map[string]interface{}{
+	"customerFromJson": nil,
+	"token": nil,
+}
+
+func TestLoginCustomer(t *testing.T) {
+	customer["customerFromJson"] = funk.Find(users, func(user dto.CreateUserFromJsonFileDTO) bool {
+		return user.Role == helper.Customer
+	}).(dto.CreateUserFromJsonFileDTO)
+	customerFromJson, ok := customer["customerFromJson"].(dto.CreateUserFromJsonFileDTO)
+	if !ok {
+		t.Error("error in customer[customerFromJson] to dto.CreateUserFromJsonFileDTO")
+	}
+	e := newExpect(t)
+	resp := e.POST("/users/login"). 
+	WithJSON(map[string]string{
+		"email": customerFromJson.Email,
+		"password": customerFromJson.Password,
+	}). 
+	Expect(). 
+	Status(200).JSON().Object()
+
+	customer["token"] = resp.Value("token").String().Raw()
+}
+
 func TestFindOneUser(t *testing.T) {
+	
 	e := newExpect(t)
 	e.GET("/users/one/" + idInput).
     WithHeader("Authorization", "Bearer " + tokenDev).
