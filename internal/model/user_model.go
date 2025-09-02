@@ -15,7 +15,7 @@ type UserModel struct {
 	FullName     string    `gorm:"size:100" json:"fullname"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
-	IsActive     bool `gorm:"default:true" json:"is_active"`
+	IsActive     bool `gorm:"default:false" json:"is_active"`
 	Role string `gorm:"default:'CUSTOMER';not null"`
 }
 
