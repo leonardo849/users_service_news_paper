@@ -3,7 +3,6 @@ package integration_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -110,11 +109,12 @@ func cleanDatabases(db *gorm.DB, redisClient *redisLib.Client, isTheEnd bool) er
 		return  users.Email
 	}).([]string)
 	if !isTheEnd {
+		logger.ZapLogger.Info("All of users that weren't in users.json were deleted" )
 		db.Where("email NOT IN ?", emails).Delete(&model.UserModel{})
 	} else {
+		logger.ZapLogger.Info("All of users were deleted" )
 		db.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&model.UserModel{})
 	}
-	logger.ZapLogger.Info(fmt.Sprintf("all of users which doesn't have that email: %s were deleted", emailJhonDoe))
 	redisClient.FlushDB(context.Background())
 	return  nil
 }
