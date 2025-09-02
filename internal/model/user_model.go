@@ -15,9 +15,10 @@ type UserModel struct {
 	FullName  string    `gorm:"size:100" json:"fullname"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	Code      *int      `json:"code"`
+	Code      *string    `json:"code"`
 	IsActive  bool      `gorm:"default:false" json:"is_active"`
 	Role      string    `gorm:"default:'CUSTOMER';not null"`
+	CodeDate time.Time `json:"code_date"`
 }
 
 func (u *UserModel) BeforeCreate(tx *gorm.DB) (err error) {

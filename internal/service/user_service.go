@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 	"users-service/internal/dto"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
@@ -52,11 +53,13 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in find by email", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
+	code := helper.EncodeToString(6)
 	newUser = model.UserModel{
 		Username: input.Username,
 		Email:    input.Email,
 		Password: hash,
 		FullName: input.Fullname,
+		Code: &code,
 	}
 
 	if err = gorm.G[model.UserModel](u.db).Create(fiberCtx, &newUser); err != nil {
@@ -64,10 +67,10 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		return 500, err.Error()
 	}
 	msg := "user was created"
-	if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
-		logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		msg = "user was created, but user wasn't setted in cache"
-	}
+	// if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
+	// 	logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
+	// 	msg = "user was created, but user wasn't setted in cache"
+	// }
 	logger.ZapLogger.Info("new user was created")
 	m := map[string]string{
 		"message": msg,
@@ -75,6 +78,29 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 	}
 
 	return 201, m
+}
+
+func (u *UserService) ExpireCodes() error {
+	cutoff := time.Now().Add(-5 * time.Minute)
+	result := u.db.Model(&model.UserModel{}).Where("code_date <= ? AND CODE IS NOT NULL", cutoff).Update("code", nil)
+	if result.Error != nil {
+		logger.ZapLogger.Error("error in find expirated codes", zap.Error(result.Error))
+		return result.Error
+	}
+	// mapped := funk.Map(users, func(user model.UserModel) dto.FindUserDTO{
+	// 	return dto.FindUserDTO{
+	// 		ID: user.ID,
+	// 		Username: user.Username,
+	// 		Email: user.Email,
+	// 		FullName: user.FullName,
+	// 		CreatedAt: user.CreatedAt,
+	// 		UpdatedAt: user.UpdatedAt,
+	// 		IsActive: user.IsActive,
+	// 		Role: user.Role,
+	// 	}
+	// }).([]dto.FindUserDTO)
+	logger.ZapLogger.Info("codes were expired")
+	return  nil
 }
 
 func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (status int, message interface{}) {

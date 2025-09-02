@@ -1,6 +1,7 @@
 package router
 
 import (
+	"time"
 	"users-service/internal/handler"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
@@ -10,9 +11,38 @@ import (
 	"users-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 )
 
+func desactiveCodesJob() {
+	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
+	userService := service.CreateUserService(repository.DB, userServiceRedis)
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							logger.ZapLogger.Error("panic in ExpireCodes", zap.Any("error", r))
+						}
+					}()
+					err := userService.ExpireCodes()
+					if err != nil {
+						logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
+					} else {
+						logger.ZapLogger.Info("codes were expired")
+					}
+				}()
+			}
+		}
+	}()
+}
+
 func setupUserRoutes(userGroup fiber.Router) {
+	desactiveCodesJob()
 	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
 	userService := service.CreateUserService(repository.DB, userServiceRedis)
 	userController := handler.UserController{UserService: userService}
