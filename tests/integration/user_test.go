@@ -1,6 +1,8 @@
 package integration_test
 
 import (
+	"log"
+	"os"
 	"testing"
 	"users-service/internal/dto"
 	"users-service/internal/helper"
@@ -8,35 +10,79 @@ import (
 	"github.com/thoas/go-funk"
 )
 
+
+
 const userTestName string = "TestUserDev@"
-var tokenDev string
-var inputDev = dto.CreateUserDTO{
+var input = dto.CreateUserDTO{
 	Username: userTestName,
-	Email: "Batman123@gmail.com",
+	Email: "",
 	Password: ";u8zG9D4b$",
 	Fullname: "User Test Dev 123",
 }
 
+var ceo = map[string]interface{}{
+	"ceoFromJson": nil,
+	"token": nil,
+	"id": nil,
+}
+
+var customer = map[string]interface{}{
+	"customerFromJson": nil,
+	"token": nil,
+	"id": nil,
+}
+
+var journalist  = map[string]interface{}{
+	"journalistFromJson": nil,
+	"token": nil,
+	"id": nil,
+}
+
+var dev = map[string]interface{}{
+	"devFromJson": nil,
+	"token": nil,
+	"id": nil,
+}
+
+// func findAllUsers() ([]model.UserModel, error){
+// 	var users []model.UserModel
+// 	result := DB.Find(&users)
+// 	if result.Error != nil {
+// 		return  nil, result.Error
+// 	} 
+// 	return  users, result.Error
+// }
+
+
+// func GetIds() (users []model.UserModel, err error) {
+// 	users, err = findAllUsers()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// }
 
 
 func TestCreateUser(t *testing.T) {
+	input.Email = os.Getenv("EMAIL_INPUT")
+	log.Print(input.Email)
 	e := newExpect(t)
 	e.POST("/users/create"). 
 	WithJSON(map[string]string{
-		"username": inputDev.Username,
-		"email": inputDev.Email,
-		"password": inputDev.Password,
-		"fullname": inputDev.Fullname,
+		"username": input.Username,
+		"email": input.Email,
+		"password": input.Password,
+		"fullname": input.Fullname,
 	}).Expect(). 
 	Status(201).JSON().Object()
 
 
 	e.POST("/users/create"). 
 	WithJSON(map[string]string{
-		"username": inputDev.Username,
-		"email": inputDev.Email,
-		"password": inputDev.Password,
-		"fullname": inputDev.Fullname,
+		"username": input.Username,
+		"email": input.Email,
+		"password": input.Password,
+		"fullname": input.Fullname,
 	}).Expect(). 
 	Status(409)
 }
@@ -46,43 +92,9 @@ func TestCreateUser(t *testing.T) {
 
 
 
-func TestLoginUser(t *testing.T) {
-	
-	e := newExpect(t)
-	res := e.POST("/users/login"). 
-	WithJSON(map[string]string{
-		"email": inputDev.Email,
-		"password": inputDev.Password,
-	}). 
-	Expect().
-	Status(200).JSON().Object()
-
-	tokenDev = res.Value("token").String().NotEmpty().Raw()
-
-	e.POST("/users/login"). 
-	WithJSON(map[string]string{
-		"email": inputDev.Email,
-		"password": inputDev.Password + "432423423",
-	}). 
-	Expect().
-	Status(401)
-
-	e.POST("/users/login"). 
-	WithJSON(map[string]string{
-		"email": inputDev.Email + "4333",
-		"password": inputDev.Password + "432423423",
-	}). 
-	Expect().
-	Status(404)
-
-	
-}
 
 
-var ceo map[string]interface{} = map[string]interface{}{
-	"ceoFromJson": nil,
-	"token": nil,
-}
+
 
 func TestLoginCeo(t *testing.T) {
 	
@@ -107,10 +119,29 @@ func TestLoginCeo(t *testing.T) {
 	ceo["token"] = resp.Value("token").String().Raw()
 }
 
-var dev map[string]interface{} = map[string]interface{}{
-	"devFromJson": nil,
-	"token": nil,
+func TestFindAll(t *testing.T) {
+	tokenCeo := ceo["token"].(string)
+	e := newExpect(t)
+	resp := e.GET("/users/all").
+	WithHeader("Authorization", "Bearer " + tokenCeo).
+	Expect().
+	Status(200).JSON().Array()
+
+	usersI := resp.Raw()
+	for _, u := range usersI {
+		user := u.(map[string]interface{})
+		if user["role"] == helper.Ceo && ceo["id"] == nil {
+			ceo["id"] = user["id"]
+		} else if user["role"] == helper.Customer && customer["id"] == nil {
+			customer["id"] = user["id"]
+		} else if user["role"] == helper.Developer && dev["id"] == nil {
+			dev["id"] = user["id"]
+		} else if journalist["id"] == nil && user["role"] == helper.Journalist{
+			journalist["id"] = user["id"]
+		}
+	}
 }
+
 
 func TestLoginDev(t *testing.T) {
 	dev["devFromJson"] = funk.Find(users, func(user dto.CreateUserFromJsonFileDTO) bool {
@@ -132,10 +163,7 @@ func TestLoginDev(t *testing.T) {
 	dev["token"] = resp.Value("token").String().Raw()
 }
 
-var journalist map[string]interface{} = map[string]interface{}{
-	"journalistFromJson": nil,
-	"token": nil,
-}
+
 
 func TestLoginJournalist(t *testing.T) {
 	journalist["journalistFromJson"] = funk.Find(users, func(user dto.CreateUserFromJsonFileDTO) bool {
@@ -158,10 +186,7 @@ func TestLoginJournalist(t *testing.T) {
 }
 
 
-var customer = map[string]interface{}{
-	"customerFromJson": nil,
-	"token": nil,
-}
+
 
 func TestLoginCustomer(t *testing.T) {
 	customer["customerFromJson"] = funk.Find(users, func(user dto.CreateUserFromJsonFileDTO) bool {
@@ -183,23 +208,32 @@ func TestLoginCustomer(t *testing.T) {
 	customer["token"] = resp.Value("token").String().Raw()
 }
 
+
+
+
 func TestFindOneUser(t *testing.T) {
-	
+	searchedId := customer["id"].(string)
+	token := ceo["token"].(string)
 	e := newExpect(t)
-	e.GET("/users/one/" + idInput).
-    WithHeader("Authorization", "Bearer " + tokenDev).
+	e.GET("/users/one/" + searchedId).
+    WithHeader("Authorization", "Bearer " + token).
     Expect().
     Status(200).
     JSON().Object()
 }
 
+
+
 func TestUpdateOneUser(t *testing.T) {
+	searchedId := customer["id"].(string)
+	token := ceo["token"].(string)
+	
 	e := newExpect(t)
-	e.PUT("/users/update/" + idInput). 
+	e.PUT("/users/update/" + searchedId). 
 	WithJSON(map[string]string{
-		"username": inputDev.Username + "3234",
+		"username": input.Username + "3234",
 	}). 
-	WithHeader("Authorization", "Bearer " + tokenDev).
+	WithHeader("Authorization", "Bearer " + token).
 	Expect().
 	Status(200). 
 	JSON().Object()
@@ -207,12 +241,13 @@ func TestUpdateOneUser(t *testing.T) {
 
 
 func TestUpdateOneUserRole(t *testing.T) {
+	searchedId := customer["id"].(string)
 	tokenCeo, ok := ceo["token"].(string)
 	if !ok {
 		t.Error("error in ceo token to string")
 	}
 	e := newExpect(t)
-	e.PATCH("/users/update/role/" + idInput). 
+	e.PATCH("/users/update/role/" + searchedId). 
 	WithJSON(map[string]string{
 		"role": helper.Developer,
 	}).

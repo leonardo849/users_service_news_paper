@@ -46,6 +46,7 @@ func setupUserRoutes(userGroup fiber.Router) {
 	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
 	userService := service.CreateUserService(repository.DB, userServiceRedis)
 	userController := handler.UserController{UserService: userService}
+	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{helper.Ceo}) ,userController.FindOneUser())

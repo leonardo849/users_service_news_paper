@@ -149,3 +149,23 @@ func (u *UserController) UpdateOneUserRole() fiber.Handler {
 		return ctx.Status(status).JSON(fiber.Map{"message": reply})
 	}
 }
+
+
+// @Summary Find All Users
+// @Description find all users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.MessageDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Router /users/all [get]
+func (u *UserController) FindAllUsers() fiber.Handler {
+	return  func(ctx *fiber.Ctx) error {
+		status, users := u.UserService.FindAllUsers()
+		if status >= 400 {
+			logger.ZapLogger.Error("error in user service find all users", zap.String("function", "user controller.findallusers"))
+			return ctx.Status(status).JSON(fiber.Map{"error": "internal server error"})
+		}
+		return  ctx.Status(status).JSON(users)
+	}
+}

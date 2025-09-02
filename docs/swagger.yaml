@@ -93,6 +93,25 @@ info:
   title: Backend Portfolio API
   version: "1.0"
 paths:
+  /users/all:
+    get:
+      consumes:
+      - application/json
+      description: find all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Find All Users
+      tags:
+      - users
   /users/create:
     post:
       consumes:

@@ -14,3 +14,4 @@ In config, create the ".env" file
 - REDIS_PASSWORD: string
 - SERVICE_EMAIL: string
 - SERVICE_PASSWORD: string
+- EMAIL_INPUT: string

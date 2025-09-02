@@ -5,11 +5,13 @@ import (
 	"errors"
 	"time"
 	"users-service/internal/dto"
+	"users-service/internal/email"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	"users-service/internal/validate"
 
+	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -66,6 +68,11 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
+	email.SendEmail(dto.SendEmailDTO{
+		To: newUser.Email,
+		Subject: "code auth",
+		Text: *newUser.Code,
+	})
 	msg := "user was created"
 	// if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
 	// 	logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
@@ -101,6 +108,36 @@ func (u *UserService) ExpireCodes() error {
 	// }).([]dto.FindUserDTO)
 	logger.ZapLogger.Info("codes were expired")
 	return  nil
+}
+
+func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status int, message interface{}) {
+	code := helper.EncodeToString(6)
+	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Update("code", code)
+	if result.Error != nil {
+		return 500, result.Error.Error()
+	}
+	return 200, "new code was generated"
+}
+
+func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.VerifyCodeDTO) (status int, message interface{}) {
+	user, err := gorm.G[model.UserModel](u.db).Where("id = ? AND is_active = ?", id, false).First(fiberCtx)
+	if err != nil {
+		return 500, err.Error()
+	}
+	if user.Code == nil {
+		status, message = u.CreateNewCode(id, fiberCtx)
+		return status, message
+	}
+	if err := validate.Validate.Struct(input); err != nil {
+		return 400, err.Error()
+	}
+	if *user.Code == input.Code {
+		result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(map[string]interface{}{"is_active": true, "code": nil})
+		if result.Error != nil {
+			return 500, err.Error()
+		}
+	} 
+	return 400, "the code is wrong"
 }
 
 func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (status int, message interface{}) {
@@ -165,6 +202,28 @@ func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) 
 	return 200, map[string]string{
 		"token": jwt,
 	}
+}
+
+func (u *UserService) FindAllUsers() (status int, users []dto.FindUserDTO) {
+	var arr []model.UserModel
+	result := u.db.Find(&arr)
+	
+	if result.Error != nil {
+		return 500, nil
+	}
+	users = funk.Map(arr, func(user model.UserModel) dto.FindUserDTO {
+		return dto.FindUserDTO{
+			ID: user.ID,
+			Username: user.Username,
+			Email: user.Email,
+			FullName: user.FullName,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			IsActive: user.IsActive,
+			Role: user.Role,
+		}
+	}).([]dto.FindUserDTO)
+	return 200, users
 }
 
 func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Context, id string) (status int, message interface{}) {

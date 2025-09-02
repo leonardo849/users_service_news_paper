@@ -3,6 +3,7 @@ package email
 import (
 	"fmt"
 	"os"
+	"users-service/internal/dto"
 	"users-service/internal/logger"
 
 	"go.uber.org/zap"
@@ -13,12 +14,33 @@ var (
 	gomailD *gomail.Dialer
 	email string
 	password string
+	s gomail.SendCloser
 )
+
 
 const (
 	host = "smtp.gmail.com"
 	port = 587
 )
+
+var emailQueue = make(chan dto.SendEmailDTO, 100)
+func StartEmailWorker() {
+	go func() {
+		for e := range emailQueue {
+			m := gomail.NewMessage()
+			m.SetHeader("From", email)
+			m.SetHeader("To", e.To)
+			m.SetHeader("Subject", e.Subject)
+			m.SetBody("text/plain", e.Text)
+
+			if err := gomail.Send(s, m); err != nil {
+				logger.ZapLogger.Error("error sending email", zap.Error(err))
+			} else {
+				logger.ZapLogger.Info("email was sent", zap.String("to", e.To))
+			}
+		}
+	}()
+}
 
 func InitGomail() error {
 	email = os.Getenv("SERVICE_EMAIL")
@@ -29,26 +51,28 @@ func InitGomail() error {
 	}
 	gomailD = gomail.NewDialer(host, port, email, password)
 	logger.ZapLogger.Info("gomail is ready!")
+	var err error
+	s, err = gomailD.Dial()
+	if err != nil {
+		return  err
+	}
 	return  nil
 }
 
-func SendEmail(to string, subject string, text string) error {
-	if subject == "" {
-		subject = "Email From NewsPaper"
+func SendEmail(input dto.SendEmailDTO) error {
+	if input.Subject == "" {
+		input.Subject = "Email From NewsPaper"
 	}
-	if text == "" || to == "" {
+	if input.Text == "" || input.To == "" {
 		logger.ZapLogger.Error("text or to is empty")
 		return  fmt.Errorf("text or to is empty")
 	}
-	m := gomail.NewMessage()
-	m.SetHeader("From", email)
-	m.SetHeader("To", to)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/plain", text)
+	
 
-	if err := gomailD.DialAndSend(m); err != nil {
-		logger.ZapLogger.Error("error in sending email", zap.Error(err))
-		return  err
-	}
+	
+
+	emailQueue <- input
+	logger.ZapLogger.Info("new input joined queue")
+
 	return  nil
 }

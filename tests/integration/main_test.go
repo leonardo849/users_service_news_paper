@@ -10,6 +10,7 @@ import (
 	"testing"
 	"users-service/config"
 	"users-service/internal/dto"
+	"users-service/internal/email"
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	_ "users-service/internal/model"
@@ -51,6 +52,10 @@ func TestMain(m *testing.M) {
 	if err = logger.StartLogger(); err != nil {
 		log.Panic(err.Error())
 	}
+
+	if err := email.InitGomail(); err != nil {
+		log.Panic(err.Error())
+	}
 	
 	validate.StartValidator()
 	db, err := repository.ConnectToDatabase()
@@ -61,6 +66,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
 	
 	
 	DB = db
@@ -125,5 +131,6 @@ func TestMessage(t *testing.T) {
 	Expect().
 	Status(200).JSON(). 
 	Object()
-
 }
+
+
