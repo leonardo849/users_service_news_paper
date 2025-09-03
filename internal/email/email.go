@@ -56,6 +56,7 @@ func InitGomail() error {
 	if err != nil {
 		return  err
 	}
+	StartEmailWorker()
 	return  nil
 }
 
@@ -73,6 +74,5 @@ func SendEmail(input dto.SendEmailDTO) error {
 
 	emailQueue <- input
 	logger.ZapLogger.Info("new input joined queue")
-
 	return  nil
 }

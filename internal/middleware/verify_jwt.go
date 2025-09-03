@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"users-service/config"
-	
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -33,7 +32,7 @@ func VerifyJWT() fiber.Handler {
 			}
 		})
 		if err != nil || !token.Valid {
-			return ctx.Status(401).JSON(fiber.Map{"error": "invalid token"})
+			return ctx.Status(401).JSON(fiber.Map{"error": err.Error()})
 		}
 		claims := token.Claims.(jwt.MapClaims)
 		ctx.Locals("user", claims)

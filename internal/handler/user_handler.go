@@ -170,6 +170,17 @@ func (u *UserController) FindAllUsers() fiber.Handler {
 	}
 }
 
+
+// @Summary Verify User
+// @Description that is the verify user method
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body dto.VerifyCodeDTO true "code"
+// @Success 200 {object} dto.LoginDTO
+// @Failure 400 {object} dto.ErrorDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Router /users/verify [post]
 func (u *UserController) VerifyUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
@@ -188,5 +199,26 @@ func (u *UserController) VerifyUser() fiber.Handler {
 			return  ctx.Status(status).JSON(fiber.Map{"error": message})
 		}
 		return  ctx.Status(status).JSON(fiber.Map{"message": message})
+	}
+}
+
+// @Summary Get new code
+// @Description that method finds an user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.FindUserDTO
+// @Failure 500 {object} dto.ErrorDTO
+// @Router /users/new_code [get]
+func (u *UserController) GetNewCode() fiber.Handler {
+	return  func(ctx *fiber.Ctx) error {
+		mapClaims := ctx.Locals("user").(jwt.MapClaims)
+		user := map[string]interface{}(mapClaims)
+		id := user["id"].(string)
+		status, message := u.UserService.CreateNewCode(id, ctx.Context())
+		if status >= 400 {
+			return  ctx.Status(status).JSON(fiber.Map{"error": message})
+		}
+		return ctx.Status(status).JSON(fiber.Map{"message": message})
 	}
 }
