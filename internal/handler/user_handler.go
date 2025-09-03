@@ -169,3 +169,24 @@ func (u *UserController) FindAllUsers() fiber.Handler {
 		return  ctx.Status(status).JSON(users)
 	}
 }
+
+func (u *UserController) VerifyUser() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+
+		var input dto.VerifyCodeDTO
+		if err := ctx.BodyParser(&input); err != nil {
+			logger.ZapLogger.Error("error in body parser", zap.Error(err))
+			return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
+		}
+
+		mapClaims := ctx.Locals("user").(jwt.MapClaims)
+		user := map[string]interface{}(mapClaims)
+		id := user["id"].(string)
+
+		status, message := u.UserService.VerifyCode(id, ctx.Context(), input)
+		if status >= 400 {
+			return  ctx.Status(status).JSON(fiber.Map{"error": message})
+		}
+		return  ctx.Status(status).JSON(fiber.Map{"message": message})
+	}
+}

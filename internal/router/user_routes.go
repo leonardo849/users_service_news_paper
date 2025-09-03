@@ -48,6 +48,7 @@ func setupUserRoutes(userGroup fiber.Router) {
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
+	userGroup.Post("/verify")
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{helper.Ceo}) ,userController.FindOneUser())
 	userGroup.Put("/update/:id", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.SameIdOrRole([]string{}), userController.UpdateOneUser())
