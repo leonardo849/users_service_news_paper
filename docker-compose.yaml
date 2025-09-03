@@ -11,8 +11,6 @@ services:
       - REDIS_URI=redis:6379
       - REDIS_DATABASE=1
       - SECOND_DELAY=2
-      - EMAIL_JHONDOE=jhondoe@gmail.com
-      - PASSWORD_JHONDOE=70UwP6M+5;
     depends_on:
       db:
         condition: service_healthy
