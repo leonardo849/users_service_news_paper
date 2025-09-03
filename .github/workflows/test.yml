@@ -58,6 +58,8 @@ jobs:
           REDIS_URI: localhost:6379
           REDIS_DATABASE: 1
           RABBIT_ON: false
-          EMAIL_JHONDOE: ${{ secrets.EMAIL_JHONDOE }}
-          PASSWORD_JHONDOE: ${{ secrets.PASSWORD_JHONDOE }} 
+          SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
+          SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
+          EMAIL_INPUT: ${{ secrets.EMAIL_INPUT }}
+
         run: go test ./... -v
