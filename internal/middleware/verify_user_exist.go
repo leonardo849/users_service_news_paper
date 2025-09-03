@@ -16,6 +16,7 @@ import (
 
 var userServiceRedis = service.CreateUserServiceRedis(nil)
 var userService = service.CreateUserService(nil, userServiceRedis)
+
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		if userServiceRedis.IsRedisNil() {
@@ -29,14 +30,14 @@ func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 		user := map[string]interface{}(mapClaims)
 		id := user["id"].(string)
 		logger.ZapLogger.Info("user id: " + id)
-		status, reply := userService.FindOneUser(id, ctx.Context())
+		status, reply := userService.FindOneUserById(id, ctx.Context())
 		if status == 404 {
-			return  ctx.Status(401).JSON(fiber.Map{"error": "your user doesn't exist"})
+			return ctx.Status(401).JSON(fiber.Map{"error": "your user doesn't exist"})
 		}
 		updatedAt := user["updatedAt"]
 		timestamp, ok := updatedAt.(string)
 		if !ok {
-			return  ctx.Status(401).JSON(fiber.Map{"error": "token is wrong"})
+			return ctx.Status(401).JSON(fiber.Map{"error": "token is wrong"})
 		}
 
 		updatedAtInTime, err := time.Parse(time.RFC3339Nano, timestamp)
@@ -47,8 +48,8 @@ func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 		updatedAtInDB := reply.(dto.FindUserDTO).UpdatedAt.Truncate(time.Second)
 		log.Print(updatedAtInDB, updatedAtInTime)
 		if updatedAtInTime.Before(updatedAtInDB) {
-			return  ctx.Status(401).JSON(fiber.Map{"error": "that token is expired"})
+			return ctx.Status(401).JSON(fiber.Map{"error": "that token is expired"})
 		}
-		return  ctx.Next()
+		return ctx.Next()
 	}
 }

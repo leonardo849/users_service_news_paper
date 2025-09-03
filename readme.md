@@ -12,3 +12,6 @@ In config, create the ".env" file
 - RABBIT_ON: string (boolean in string)
 - SECOND_DELAY: string
 - REDIS_PASSWORD: string
+- SERVICE_EMAIL: string
+- SERVICE_PASSWORD: string
+- EMAIL_INPUT: string

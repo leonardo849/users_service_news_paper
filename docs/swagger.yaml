@@ -86,6 +86,13 @@ definitions:
     required:
     - role
     type: object
+  dto.VerifyCodeDTO:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -93,6 +100,25 @@ info:
   title: Backend Portfolio API
   version: "1.0"
 paths:
+  /users/all:
+    get:
+      consumes:
+      - application/json
+      description: find all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Find All Users
+      tags:
+      - users
   /users/create:
     post:
       consumes:
@@ -159,6 +185,25 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorDTO'
       summary: Login User
+      tags:
+      - users
+  /users/new_code:
+    get:
+      consumes:
+      - application/json
+      description: that method finds an user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.FindUserDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Get new code
       tags:
       - users
   /users/one/{id}:
@@ -266,6 +311,36 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorDTO'
       summary: Update User Role
+      tags:
+      - users
+  /users/verify:
+    post:
+      consumes:
+      - application/json
+      description: that is the verify user method
+      parameters:
+      - description: code
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyCodeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorDTO'
+      summary: Verify User
       tags:
       - users
 swagger: "2.0"

@@ -29,6 +29,10 @@ type LoginUserDTO struct {
 	Password string `json:"password"`
 }
 
+type VerifyCodeDTO struct {
+	Code string `json:"code" validate:"required,len=6,numeric"`
+}
+
 type UpdateUserDTO struct {
 	Username *string `json:"username" validate:"omitempty,max=50"`
 	Email    *string `json:"email" validate:"omitempty,max=100,email"`
