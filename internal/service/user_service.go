@@ -10,7 +10,9 @@ import (
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	"users-service/internal/validate"
-
+	"users-service/pkg/hash"
+	"users-service/pkg/random"
+	"users-service/pkg/date"
 	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -34,7 +36,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		return 400, err.Error()
 	}
 	var newUser model.UserModel
-	hash, err := helper.StringToHash(input.Password)
+	hashPassword, err := hash.StringToHash(input.Password)
 	if err != nil {
 		logger.ZapLogger.Error("internal server in stringToHash", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
@@ -55,18 +57,18 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in find by email", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	code := helper.EncodeToString(6)
-	hashCode, err := helper.StringToHash(code)
+	code := random.EncodeToString(6)
+	hashCode, err := hash.StringToHash(code)
 	if err != nil {
 		return 500, err.Error()
 	}
 	newUser = model.UserModel{
 		Username: input.Username,
 		Email:    input.Email,
-		Password: hash,
+		Password: hashPassword,
 		FullName: input.Fullname,
 		Code: &hashCode,
-		CodeDate: helper.PtrTime(time.Now()),
+		CodeDate: date.PtrTime(time.Now()),
 	}
 
 	if err = gorm.G[model.UserModel](u.db).Create(fiberCtx, &newUser); err != nil {
@@ -116,12 +118,12 @@ func (u *UserService) ExpireCodes() error {
 }
 
 func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status int, message interface{}) {
-	code := helper.EncodeToString(6)
-	hashCode, err := helper.StringToHash(code)
+	code := random.EncodeToString(6)
+	hashCode, err := hash.StringToHash(code)
 	if err != nil {
 		return 500, err.Error()
 	}
-	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(model.UserModel{Code: &hashCode, CodeDate: helper.PtrTime(time.Now())})
+	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(model.UserModel{Code: &hashCode, CodeDate: date.PtrTime(time.Now())})
 	if result.Error != nil {
 		return 500, result.Error.Error()
 	}
@@ -149,7 +151,7 @@ func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.
 	if err := validate.Validate.Struct(input); err != nil {
 		return 400, err.Error()
 	}
-	if helper.CompareHash(input.Code, *user.Code) {
+	if hash.CompareHash(input.Code, *user.Code) {
 		result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(map[string]interface{}{"is_active": true, "code": nil, "code_date": nil})
 		if result.Error != nil {
 			return 500, result.Error.Error()
@@ -244,7 +246,7 @@ func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) 
 		}
 	}
 
-	if !helper.CompareHash(dto.Password, user.Password) {
+	if !hash.CompareHash(dto.Password, user.Password) {
 		logger.ZapLogger.Error("password is wrong", zap.String("function", "userService.loginuser"))
 		return 401, "password is wrong"
 	}

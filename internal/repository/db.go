@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"users-service/config"
 	"users-service/internal/dto"
-	"users-service/internal/helper"
+	"users-service/pkg/hash"
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	"users-service/internal/validate"
@@ -84,57 +84,6 @@ func migrateModels(db *gorm.DB) error {
 
 func createAccounts(db *gorm.DB) error {
 
-	// chosenEmail := os.Getenv("EMAIL_JHONDOE")
-	// chosenPassword := os.Getenv("PASSWORD_JHONDOE")
-	// if chosenEmail == "" || chosenPassword == "" {
-	// 	logger.ZapLogger.Error("the jhondoe's password or jhondoe's email is empty", zap.Error(fmt.Errorf("the jhondoe's password or jhondoe's email is empty")))
-	// 	return fmt.Errorf("the jhondoe's password or jhondoe's email is empty")
-	// }
-	// ctx := context.Background()
-	// const username = "Jhon"
-	// const name = "Jhon Doe"
-	// _, err := gorm.G[model.UserModel](db).Where(&model.UserModel{Username: username, FullName: name, Email: chosenEmail, Role: helper.Master}).First(ctx)
-	// if err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		dto := dto.CreateUserDTO{
-	// 			Username: username,
-	// 			Email:    chosenEmail,
-	// 			Password: chosenPassword,
-	// 			Fullname: name,
-	// 		}
-	// 		if err := validate.Validate.Struct(dto); err != nil {
-	// 			logger.ZapLogger.Error("error in validate struct dto", zap.Error(err))
-	// 			return err
-	// 		}
-	// 		hash, err := helper.StringToHash(dto.Password)
-	// 		if err != nil {
-	// 			logger.ZapLogger.Error("error in string to hash", zap.Error(err))
-	// 			return err
-	// 		}
-	// 		user := model.UserModel{
-	// 			Username: dto.Username,
-	// 			Email:    dto.Email,
-	// 			Password: hash,
-	// 			FullName: dto.Fullname,
-	// 			Role:     helper.,
-	// 			IsActive: true,
-	// 		}
-	// 		err = gorm.G[model.UserModel](db).Create(ctx, &user)
-	// 		if err != nil {
-	// 			logger.ZapLogger.Error("error in create jhon doe", zap.Error(err))
-	// 			return err
-	// 		}
-	// 		logger.ZapLogger.Info("jhon doe account was created")
-	// 		return  nil
-	// 	} else {
-	// 		logger.ZapLogger.Error("error", zap.Error(err))
-	// 		return  err
-	// 	}
-	// }
-	// return nil
-
-	
-
 	var users []dto.CreateUserFromJsonFileDTO
  	projectRoot := config.FindProjectRoot()
 	if projectRoot == "" {
@@ -154,7 +103,7 @@ func createAccounts(db *gorm.DB) error {
 		if err := validate.Validate.Struct(newUser); err != nil {
 			return  err
 		}
-		hash, err := helper.StringToHash(newUser.Password)
+		hash, err := hash.StringToHash(newUser.Password)
 		if err != nil {
 			return  err
 		}
