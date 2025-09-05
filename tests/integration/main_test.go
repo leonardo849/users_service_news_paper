@@ -10,10 +10,10 @@ import (
 	"testing"
 	"users-service/config"
 	"users-service/internal/dto"
-	"users-service/internal/email"
 	"users-service/internal/logger"
 	"users-service/internal/model"
 	_ "users-service/internal/model"
+	"users-service/internal/rabbitmq"
 	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/router"
@@ -53,8 +53,8 @@ func TestMain(m *testing.M) {
 		log.Panic(err.Error())
 	}
 
-	if err := email.InitGomail(); err != nil {
-		log.Panic(err.Error())
+	if err := rabbitmq.ConnectToRabbitMQ(); err != nil {
+		logger.ZapLogger.Error(err.Error())
 	}
 	
 	validate.StartValidator()

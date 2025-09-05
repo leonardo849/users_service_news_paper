@@ -5,14 +5,16 @@ import (
 	"errors"
 	"time"
 	"users-service/internal/dto"
-	"users-service/internal/email"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
+	"users-service/internal/rabbitmq"
 	"users-service/internal/validate"
+	"users-service/pkg/date"
+	"users-service/pkg/email_dto"
 	"users-service/pkg/hash"
 	"users-service/pkg/random"
-	"users-service/pkg/date"
+
 	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -75,11 +77,15 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	email.SendEmail(dto.SendEmailDTO{
-		To: newUser.Email,
-		Subject: "code auth",
-		Text: code,
-	})
+	rabbitmq.GetRabbitMQClient().PublishEmail(
+		email_dto.SendEmailDTO{
+			To: []string{newUser.Email},
+			Subject: "code",
+			Text: code,
+		}, 
+		fiberCtx,
+	)
+
 	msg := "user was created"
 	// if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
 	// 	logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
@@ -131,11 +137,14 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 	if err != nil {
 		return 500, result.Error.Error()
 	}
-	email.SendEmail(dto.SendEmailDTO{
-		To: user.Email,
-		Subject: "new code",
-		Text: code,
-	})
+	rabbitmq.GetRabbitMQClient().PublishEmail(
+		email_dto.SendEmailDTO{
+			To: []string{user.Email},
+			Subject: "new code",
+			Text: code,
+		},
+		fiberCtx,
+	)
 	return 200, "new code was generated. It was sent to your email"
 }
 

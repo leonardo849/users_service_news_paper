@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"users-service/config"
-	"users-service/internal/email"
 	"users-service/internal/logger"
 	"users-service/internal/prometheus"
 	"users-service/internal/rabbitmq"
@@ -32,10 +31,6 @@ func main() {
 	}
 	prometheus.StartPrometheus()
 	validate.StartValidator()
-	if err := email.InitGomail(); err != nil {
-		logger.ZapLogger.Error("error in init gomail", zap.Error(err))
-		os.Exit(1)
-	}
 	if _,err := repository.ConnectToDatabase(); err != nil {
 		logger.ZapLogger.Error("error in repository.connectodatabase", zap.String("function", "repository.ConnectToDatabase()"), zap.Error(err))
 		os.Exit(1)
