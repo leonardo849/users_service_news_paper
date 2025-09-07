@@ -88,6 +88,7 @@ func ConnectToRabbitMQ() error {
 		conn: conn,
 		ch:   ch,
 	}
+	rabbitClient.createExchanges()
 	return nil
 }
 
