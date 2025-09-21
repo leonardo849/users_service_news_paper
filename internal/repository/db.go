@@ -115,6 +115,7 @@ func createAccounts(db *gorm.DB) error {
 			Role: newUser.Role,
 			IsActive: true,
 			CodeDate: nil,
+			IsVerified: true,
 		}
 		_, err = gorm.G[model.UserModel](db).Where("username = ? OR email = ?", newUser.Username, newUser.Email).First(context.Background())
 		if err == nil {

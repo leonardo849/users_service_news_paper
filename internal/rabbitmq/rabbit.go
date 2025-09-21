@@ -10,7 +10,7 @@ import (
 	"users-service/pkg/email_dto"
 
 	"strings"
-
+	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto" 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
@@ -22,6 +22,7 @@ type clientI interface {
 	createExchanges()
 	PublishEmail(input email_dto.SendEmailDTO, ctx  context.Context) error
 	CloseRabbit()
+	PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context) error
 }
 
 type client struct {

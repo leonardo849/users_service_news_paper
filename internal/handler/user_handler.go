@@ -27,6 +27,7 @@ type UserController struct {
 // @Router /users/create [post]
 func (u *UserController) CreateUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		
 		var input dto.CreateUserDTO
 		if err := ctx.BodyParser(&input); err != nil {
 			logger.ZapLogger.Error("error in create user user controller", zap.Error(err), zap.String("function", "usercontroller.createuser"))

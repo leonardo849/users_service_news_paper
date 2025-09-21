@@ -14,7 +14,7 @@ import (
 	"users-service/pkg/email_dto"
 	"users-service/pkg/hash"
 	"users-service/pkg/random"
-
+	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto" 
 	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -37,6 +37,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("validate error dto.createuserdto", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 400, err.Error()
 	}
+	
 	var newUser model.UserModel
 	hashPassword, err := hash.StringToHash(input.Password)
 	if err != nil {
@@ -77,21 +78,26 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	rabbitmq.GetRabbitMQClient().PublishEmail(
+	go func() {
+		if err := rabbitmq.GetRabbitMQClient().PublishEmail(
 		email_dto.SendEmailDTO{
 			To: []string{newUser.Email},
 			Subject: "code",
 			Text: code,
 		}, 
 		fiberCtx,
-	)
+	); err != nil {
+		logger.ZapLogger.Error("error in publish email. user id: " + newUser.ID.String() , zap.Error(err))
+	}
+	}()
+	
 
-	msg := "user was created"
+	msg := "user was created."
 	// if err = u.userServiceRedis.SetUser(dto.FindUserDTO{ID: newUser.ID, Username: newUser.Username, Email: newUser.Email, FullName: newUser.FullName, CreatedAt: newUser.CreatedAt, UpdatedAt: newUser.UpdatedAt, IsActive: newUser.IsActive, Role: newUser.Role}, fiberCtx); err != nil {
 	// 	logger.ZapLogger.Error("error in set user in database", zap.String("function", "userService.CreateUser"), zap.Error(err))
 	// 	msg = "user was created, but user wasn't setted in cache"
 	// }
-	logger.ZapLogger.Info("new user was created")
+	logger.ZapLogger.Info("new user was created.")
 	m := map[string]string{
 		"message": msg,
 		"id":      newUser.ID.String(),
@@ -129,7 +135,7 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 	if err != nil {
 		return 500, err.Error()
 	}
-	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(model.UserModel{Code: &hashCode, CodeDate: date.PtrTime(time.Now())})
+	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(model.UserModel{Code: &hashCode, CodeDate: date.PtrTime(time.Now())})
 	if result.Error != nil {
 		return 500, result.Error.Error()
 	}
@@ -137,19 +143,23 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 	if err != nil {
 		return 500, result.Error.Error()
 	}
-	rabbitmq.GetRabbitMQClient().PublishEmail(
+	go func() {
+		if err := rabbitmq.GetRabbitMQClient().PublishEmail(
 		email_dto.SendEmailDTO{
 			To: []string{user.Email},
-			Subject: "new code",
+			Subject: "code",
 			Text: code,
-		},
+		}, 
 		fiberCtx,
-	)
+	); err != nil {
+		logger.ZapLogger.Error("error in publish email. user id: " + user.ID.String() , zap.Error(err))
+	}
+	}()
 	return 200, "new code was generated. It was sent to your email"
 }
 
 func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.VerifyCodeDTO) (status int, message interface{}) {
-	user, err := gorm.G[model.UserModel](u.db).Where("id = ? AND is_active = ? AND code_date >= ?", id, false, time.Now().Add(-5 * time.Minute)).First(fiberCtx)
+	user, err := gorm.G[model.UserModel](u.db).Where("id = ? AND is_verified = ? AND code_date >= ?", id, false, time.Now().Add(-5 * time.Minute)).First(fiberCtx)
 	if err != nil {
 		return 500, err.Error()
 	}
@@ -161,10 +171,19 @@ func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.
 		return 400, err.Error()
 	}
 	if hash.CompareHash(input.Code, *user.Code) {
-		result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_active = ?", id, false).Updates(map[string]interface{}{"is_active": true, "code": nil, "code_date": nil})
+		result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(map[string]interface{}{"is_verified": true, "code": nil, "code_date": nil})
 		if result.Error != nil {
 			return 500, result.Error.Error()
 		} else {
+			go func() {
+				if err := rabbitmq.GetRabbitMQClient().PublishUserVerified(dtoSl.AuthPublishUserCreated{
+					AuthId: user.ID.String(),
+					Username: user.Username,
+					Role: user.Role,
+				}, fiberCtx); err != nil {
+					logger.ZapLogger.Error("error in publishing user verified. user id " + user.ID.String())
+				}
+			}()
 			return 200, "your user is active"
 		}
 	} 
@@ -198,6 +217,7 @@ func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (stat
 		UpdatedAt: user.UpdatedAt,
 		IsActive:  user.IsActive,
 		Role:      user.Role,
+		IsVerified: user.IsVerified,
 	}
 	err = u.userServiceRedis.SetUser(dto, fiberCtx)
 	msg := "returning dto"
@@ -228,6 +248,7 @@ func (u *UserService) FindOneUserByEmail(email string, fiberCtx context.Context)
 		UpdatedAt: user.UpdatedAt,
 		IsActive:  user.IsActive,
 		Role: user.Role,
+		IsVerified: user.IsVerified,
 	}
 	_, err = u.userServiceRedis.FindUser(dto.ID.String(), fiberCtx)
 	if err != nil {

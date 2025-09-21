@@ -5,22 +5,22 @@ import (
 	"encoding/json"
 	"users-service/internal/logger"
 	"users-service/pkg/email_dto"
-
+	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto" 
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 const keyEmail = "email"
-const exchangeName = "email_direct"
-
-
+const exchangeNameEmail = "email_direct"
+const exchangeNameAuthEvents = "auth_events"
+const keyUserVerified = "user.auth.verified"
 
 
 func (c *client) createExchanges() {
 	
 	
 	if err := c.ch.ExchangeDeclare(
-		exchangeName,
+		exchangeNameEmail,
 		"direct",
 		true,
 		false,
@@ -28,14 +28,45 @@ func (c *client) createExchanges() {
 		false,
 		nil,
 	); err != nil {
-		logger.ZapLogger.Fatal(err.Error(), zap.String("function", "client.ConsumerEmail"))
+		logger.ZapLogger.Fatal(err.Error(), zap.String("function", "client.createexchanges"))
 	}
 	logger.ZapLogger.Info("exchange email_direct was declared")
-
+	if  err := c.ch.ExchangeDeclare(
+                exchangeNameAuthEvents, 
+                "topic",      
+                true,         
+                false,        
+                false,       
+                false,        
+                nil,          
+        ); err != nil {
+			logger.ZapLogger.Fatal(err.Error(), zap.String("function", "client.createexchanges"))
+	}
+	logger.ZapLogger.Info("exchange auth_events topic was declared")
 	
 }
 
-
+func (c *client) PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context)  error {
+	body, err := json.Marshal(input)
+	if err != nil {
+		logger.ZapLogger.Error("error in json marshal", zap.String("function", "client.PublishEmail"), zap.Error(err))
+		return  err
+	}
+	err = c.ch.PublishWithContext(ctx, 
+		exchangeNameAuthEvents,
+		keyUserVerified,
+		false, 
+		false, 
+		amqp091.Publishing{
+			ContentType: "application/json",
+			Body: body,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return  nil
+}
 
 func (c *client) PublishEmail(input email_dto.SendEmailDTO, ctx context.Context) error {
 
@@ -46,7 +77,7 @@ func (c *client) PublishEmail(input email_dto.SendEmailDTO, ctx context.Context)
 	}
 
 
-	err = c.ch.PublishWithContext(ctx, exchangeName, keyEmail, false, false, amqp091.Publishing{
+	err = c.ch.PublishWithContext(ctx, exchangeNameEmail, keyEmail, false, false, amqp091.Publishing{
 		ContentType: "application/json",
 		Body: body,
 	})
@@ -58,6 +89,8 @@ func (c *client) PublishEmail(input email_dto.SendEmailDTO, ctx context.Context)
 	return  nil
 
 }
+
+// func (c *client) PublishUserVerified(input )
 
 func (c *client) CloseRabbit() {
 	c.ch.Close()

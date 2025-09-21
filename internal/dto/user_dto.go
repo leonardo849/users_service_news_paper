@@ -11,6 +11,7 @@ type CreateUserDTO struct {
 	Email    string `json:"email" validate:"required,max=100,email"`
 	Password string `json:"password" validate:"required,strongpassword"`
 	Fullname string `json:"fullname" validate:"required,max=100"`
+	Role *string `json:"role" validate:"omitempty,role"`
 }
 
 type FindUserDTO struct {
@@ -21,6 +22,7 @@ type FindUserDTO struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	IsActive  bool      `json:"is_active"`
+	IsVerified bool `json:"is_verified"`
 	Role      string    `json:"role"`
 }
 
@@ -50,3 +52,4 @@ type CreateUserFromJsonFileDTO struct {
 	Fullname string `json:"fullname" validate:"required,max=100"`
 	Role string `json:"role" validate:"required,role"`
 }
+

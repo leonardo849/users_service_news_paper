@@ -54,8 +54,8 @@ func setupUserRoutes(userGroup fiber.Router) {
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
-	userGroup.Get("/new_code", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(false), userController.GetNewCode())
-	userGroup.Post("/verify", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(false), userController.VerifyUser())
+	userGroup.Get("/new_code", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsVerified(false), userController.GetNewCode())
+	userGroup.Post("/verify", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsVerified(false), userController.VerifyUser())
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) ,middleware.SameIdOrRole([]string{helper.Ceo})  ,userController.FindOneUser())
 	userGroup.Put("/update/:id", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true) , middleware.SameIdOrRole([]string{}), userController.UpdateOneUser())

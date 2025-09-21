@@ -17,6 +17,7 @@ type UserModel struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Code      *string    `json:"code"`
 	IsActive  bool      `gorm:"default:false" json:"is_active"`
+	IsVerified bool `gorm:"default:false" json:"is_verified"`
 	Role      string    `gorm:"default:'CUSTOMER';not null"`
 	CodeDate *time.Time `json:"code_date"`
 }
