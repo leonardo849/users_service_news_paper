@@ -20,6 +20,7 @@ type UserModel struct {
 	IsVerified bool `gorm:"default:false" json:"is_verified"`
 	Role      string    `gorm:"default:'CUSTOMER';not null"`
 	CodeDate *time.Time `json:"code_date"`
+	UserStatus UserStatusModel `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:UserId;references:ID"`
 }
 
 func (u *UserModel) BeforeCreate(tx *gorm.DB) (err error) {
