@@ -6,14 +6,15 @@ import (
 	"users-service/internal/logger"
 	"users-service/pkg/email_dto"
 	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto" 
+	constsSl "github.com/leonardo849/shared_library_news_paper/pkg/consts"
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
-const keyEmail = "email"
-const exchangeNameEmail = "email_direct"
-const exchangeNameAuthEvents = "auth_events"
-const keyUserVerified = "user.auth.verified"
+const keyEmail = constsSl.KeyEmail
+const exchangeNameEmail = constsSl.ExchangeNameEmail
+const exchangeNameAuthEvents = constsSl.ExchangeNameAuthEvents
+const keyUserVerified = constsSl.KeyUserAuthVerified
 
 
 func (c *client) createExchanges() {
