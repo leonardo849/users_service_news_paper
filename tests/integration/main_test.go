@@ -70,7 +70,7 @@ func TestMain(m *testing.M) {
 	
 	
 	DB = db
-	app = router.SetupApp()
+	app = router.SetupApp(db, redisClient)
 	sqldb, err := db.DB()
 	if err != nil {
 		log.Panic(err.Error())

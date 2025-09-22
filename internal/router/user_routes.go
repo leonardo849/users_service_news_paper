@@ -9,15 +9,20 @@ import (
 	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/service"
-
+	redisLib "github.com/redis/go-redis/v9"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-func desactiveCodesJob() {
-	userStatusRepository := repository.CreateUserStatusRepository(repository.DB)
+func desactiveCodesJob(db *gorm.DB) {
+	if db == nil {
+		logger.ZapLogger.Fatal("repository.db is nill")
+	}
+	userRepository := repository.CreateUserRepository(db)
+	userStatusRepository := repository.CreateUserStatusRepository(db)
 	userServiceRedis := repository.CreateUserServiceRedis(redis.Rc)
-	userService := service.CreateUserService(repository.DB, userServiceRedis, userStatusRepository)
+	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository)
 	err := userService.ExpireCodes()
 	if err != nil {
 			logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
@@ -48,11 +53,15 @@ func desactiveCodesJob() {
 	}()
 }
 
-func setupUserRoutes(userGroup fiber.Router) {
-	desactiveCodesJob()
-	userStatusRepository := repository.CreateUserStatusRepository(repository.DB)
-	userServiceRedis := repository.CreateUserServiceRedis(redis.Rc)
-	userService := service.CreateUserService(repository.DB, userServiceRedis, userStatusRepository)
+func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
+	// desactiveCodesJob(db)
+	if db == nil {
+		logger.ZapLogger.Fatal("repository.db is nill")
+	}
+	userRepository := repository.CreateUserRepository(db)
+	userStatusRepository := repository.CreateUserStatusRepository(db)
+	userServiceRedis := repository.CreateUserServiceRedis(rc)
+	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository)
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())

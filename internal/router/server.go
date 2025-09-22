@@ -12,9 +12,11 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
-func SetupApp() *fiber.App {
+func SetupApp(db *gorm.DB, rc *redis.Client) *fiber.App {
 	app := fiber.New()
 	app.Use(cors.New())
 	
@@ -22,7 +24,7 @@ func SetupApp() *fiber.App {
 	app.Use(middleware.LogRequestsMiddleware(), middleware.PrometheusMiddleware())
 
 	usersGroup := app.Group("/users")
-	setupUserRoutes(usersGroup)
+	setupUserRoutes(usersGroup, db, rc)
 
 	// @Summary Hello
 	// @Description welcome message
@@ -43,8 +45,8 @@ func SetupApp() *fiber.App {
 	return  app
 }
 
-func RunServer() error {
-	app := SetupApp()
+func RunServer(db *gorm.DB, rc *redis.Client) error {
+	app := SetupApp(db, rc)
 
 	port := os.Getenv("PORT")
 	if port == "" {

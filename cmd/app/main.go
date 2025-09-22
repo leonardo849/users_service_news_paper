@@ -13,8 +13,9 @@ import (
 	"users-service/internal/validate"
 
 	_ "users-service/docs"
-
+	redisLib "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 // @title Backend Portfolio API
@@ -23,15 +24,18 @@ import (
 // @host localhost:8081
 // @BasePath /
 func main() {
-	if err := config.SetupEnvVar(); err != nil {
+	var err error
+	if err = config.SetupEnvVar(); err != nil {
 		log.Fatal(err.Error())
 	}
-	if err := logger.StartLogger(); err != nil {
+	if err = logger.StartLogger(); err != nil {
 		log.Fatal(err.Error())
 	}
+	var db *gorm.DB
+	var rc *redisLib.Client
 	prometheus.StartPrometheus()
 	validate.StartValidator()
-	if _,err := repository.ConnectToDatabase(); err != nil {
+	if db,err = repository.ConnectToDatabase(); err != nil {
 		logger.ZapLogger.Error("error in repository.connectodatabase", zap.String("function", "repository.ConnectToDatabase()"), zap.Error(err))
 		os.Exit(1)
 	}
@@ -47,7 +51,7 @@ func main() {
 
 
 
-	if err := router.RunServer(); err != nil {
+	if err := router.RunServer(db, rc); err != nil {
 		logger.ZapLogger.Error("error in run server", 
 		zap.Error(err),
 		zap.String("function", "router.RunServer()"),

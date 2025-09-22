@@ -14,12 +14,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+var userRepository = repository.CreateUserRepository(repository.DB)
 var userStatusRepository = repository.CreateUserStatusRepository(repository.DB)
 var userServiceRedis = repository.CreateUserServiceRedis(redis.Rc)
-var userService = service.CreateUserService(nil, userServiceRedis, userStatusRepository)
+var userService = service.CreateUserService(nil, userServiceRedis, userStatusRepository, userRepository)
 
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		userRepository.SetDB(repository.DB)
 		userStatusRepository.SetDB(repository.DB)
 		userServiceRedis.SetRedisDB(redis.Rc)
 		userService.SetDB(repository.DB)

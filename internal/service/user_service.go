@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 	"users-service/internal/dto"
 	"users-service/internal/helper"
@@ -26,13 +27,17 @@ type UserService struct {
 	db                   *gorm.DB
 	userRepositoryRedis  *repository.UserRedisRepository
 	userStatusRepository *repository.UserStatusRepository
+	userRepository *repository.UserRepository
+	modelName string
 }
 
-func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository) *UserService {
+func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository, userRepository *repository.UserRepository) *UserService {
 	return &UserService{
 		db:                   db,
 		userRepositoryRedis:  userRepositoryRedis,
 		userStatusRepository: userStatusRepository,
+		userRepository: userRepository,
+		modelName: "user model",
 	}
 }
 
@@ -41,6 +46,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("validate error dto.createuserdto", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 400, err.Error()
 	}
+	log.Print("is nil:", u.userRepository == nil)
 
 	var newUser model.UserModel
 	hashPassword, err := hash.StringToHash(input.Password)
@@ -48,22 +54,25 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		logger.ZapLogger.Error("internal server in stringToHash", zap.String("function", "userService.CreateUser"), zap.Error(err))
 		return 500, err.Error()
 	}
-	_, err = gorm.G[model.UserModel](u.db).Where("username = ?", input.Username).First(fiberCtx)
-	if err == nil {
-		logger.ZapLogger.Error("there is already a user with that username", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		return 409, "there is already a user with that username"
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		logger.ZapLogger.Error("internal server in find by username", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		return 500, err.Error()
-	}
-	_, err = gorm.G[model.UserModel](u.db).Where("email = ?", input.Email).First(fiberCtx)
-	if err == nil {
-		logger.ZapLogger.Error("there is already a user with that email", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		return 409, "there is already a user with that email"
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		logger.ZapLogger.Error("internal server in find by email", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		return 500, err.Error()
-	}
+	// _, err = gorm.G[model.UserModel](u.db).Where("username = ?", input.Username).First(fiberCtx)
+	// if err == nil {
+	// 	logger.ZapLogger.Error("there is already a user with that username", zap.String("function", "userService.CreateUser"), zap.Error(err))
+	// 	return 409, "there is already a user with that username"
+	// } else if !errors.Is(err, gorm.ErrRecordNotFound) {
+	// 	logger.ZapLogger.Error("internal server in find by username", zap.String("function", "userService.CreateUser"), zap.Error(err))
+	// 	return 500, err.Error()
+	// }
+	// _, err = gorm.G[model.UserModel](u.db).Where("email = ?", input.Email).First(fiberCtx)
+	// if err == nil {
+	// 	logger.ZapLogger.Error("there is already a user with that email", zap.String("function", "userService.CreateUser"), zap.Error(err))
+	// 	return 409, "there is already a user with that email"
+	// } else if !errors.Is(err, gorm.ErrRecordNotFound) {
+	// 	logger.ZapLogger.Error("internal server in find by email", zap.String("function", "userService.CreateUser"), zap.Error(err))
+	// 	return 500, err.Error()
+	// }
+
+
+
 	code := random.EncodeToString(6)
 	hashCode, err := hash.StringToHash(code)
 	if err != nil {
@@ -78,10 +87,10 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		CodeDate: date.PtrTime(time.Now()),
 	}
 
-	if err = gorm.G[model.UserModel](u.db).Create(fiberCtx, &newUser); err != nil {
-		logger.ZapLogger.Error("internal server in create newuser", zap.String("function", "userService.CreateUser"), zap.Error(err))
-		return 500, err.Error()
-	}
+	if err = u.userRepository.CreateUser(newUser, fiberCtx); err != nil {
+		status, message := helper.HandleErrors(err, u.modelName)
+		return status, message
+	} 
 	go func() {
 		if err := rabbitmq.GetRabbitMQClient().PublishEmail(
 			email_dto.SendEmailDTO{
@@ -110,11 +119,10 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 }
 
 func (u *UserService) ExpireCodes() error {
-	cutoff := time.Now().Add(-5 * time.Minute)
-	result := u.db.Model(&model.UserModel{}).Where("code_date <= ? AND code IS NOT NULL", cutoff).Update("code", nil)
-	if result.Error != nil {
-		logger.ZapLogger.Error("error in find expirated codes", zap.Error(result.Error))
-		return result.Error
+	err := u.userRepository.ExpireCodes()
+	if err != nil {
+		logger.ZapLogger.Error("error in find expirated codes", zap.Error(err))
+		return err
 	}
 	// mapped := funk.Map(users, func(user model.UserModel) dto.FindUserDTO{
 	// 	return dto.FindUserDTO{
