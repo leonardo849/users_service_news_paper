@@ -14,17 +14,16 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var userServiceRedis = service.CreateUserServiceRedis(nil)
-var userService = service.CreateUserService(nil, userServiceRedis)
+var userStatusRepository = repository.CreateUserStatusRepository(repository.DB)
+var userServiceRedis = repository.CreateUserServiceRedis(redis.Rc)
+var userService = service.CreateUserService(nil, userServiceRedis, userStatusRepository)
 
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		if userServiceRedis.IsRedisNil() {
-			userServiceRedis.SetRedisDB(redis.Rc)
-		}
-		if userService.IsDBnil() {
-			userService.SetDB(repository.DB)
-		}
+		userStatusRepository.SetDB(repository.DB)
+		userServiceRedis.SetRedisDB(redis.Rc)
+		userService.SetDB(repository.DB)
+		
 
 		mapClaims := ctx.Locals("user").(jwt.MapClaims)
 		user := map[string]interface{}(mapClaims)

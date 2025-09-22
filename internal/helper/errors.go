@@ -1,0 +1,6 @@
+package helper
+
+const (
+	NOTFOUNDMESSAGE = "NOT FOUND"
+	INTERNALSERVER = "INTERNAL SERVER"
+)

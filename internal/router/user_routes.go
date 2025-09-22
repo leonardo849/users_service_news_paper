@@ -15,8 +15,9 @@ import (
 )
 
 func desactiveCodesJob() {
-	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
-	userService := service.CreateUserService(repository.DB, userServiceRedis)
+	userStatusRepository := repository.CreateUserStatusRepository(repository.DB)
+	userServiceRedis := repository.CreateUserServiceRedis(redis.Rc)
+	userService := service.CreateUserService(repository.DB, userServiceRedis, userStatusRepository)
 	err := userService.ExpireCodes()
 	if err != nil {
 			logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
@@ -49,8 +50,9 @@ func desactiveCodesJob() {
 
 func setupUserRoutes(userGroup fiber.Router) {
 	desactiveCodesJob()
-	userServiceRedis := service.CreateUserServiceRedis(redis.Rc)
-	userService := service.CreateUserService(repository.DB, userServiceRedis)
+	userStatusRepository := repository.CreateUserStatusRepository(repository.DB)
+	userServiceRedis := repository.CreateUserServiceRedis(redis.Rc)
+	userService := service.CreateUserService(repository.DB, userServiceRedis, userStatusRepository)
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())

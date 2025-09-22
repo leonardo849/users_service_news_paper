@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"context"
@@ -11,21 +11,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type UserServiceRedis struct {
+type UserRedisRepository struct {
 	rc *redis.Client
 }
 
-func CreateUserServiceRedis(rc *redis.Client) *UserServiceRedis {
-	return &UserServiceRedis{
+func CreateUserServiceRedis(rc *redis.Client) *UserRedisRepository {
+	return &UserRedisRepository{
 		rc: rc,
 	}
 }
 
-func (u *UserServiceRedis) getKey(id string) string {
+func (u *UserRedisRepository) getKey(id string) string {
 	return "user" + ":" + id
 }
 
-func (u *UserServiceRedis) SetUser(user dto.FindUserDTO, fiberCtx context.Context) error {
+func (u *UserRedisRepository) SetUser(user dto.FindUserDTO, fiberCtx context.Context) error {
 	key := u.getKey(user.ID.String())
 	json, err := json.Marshal(user)
 	if err != nil {
@@ -41,9 +41,9 @@ func (u *UserServiceRedis) SetUser(user dto.FindUserDTO, fiberCtx context.Contex
 	return nil
 }
 
-func (u *UserServiceRedis) FindUser(id string, fiberCtx context.Context) (*dto.FindUserDTO, error) {
+func (u *UserRedisRepository) FindUser(id string, fiberCtx context.Context) (*dto.FindUserDTO, error) {
 	key := u.getKey(id)
-	val, err:= u.rc.Get(fiberCtx, key).Result()
+	val, err := u.rc.Get(fiberCtx, key).Result()
 	if err != nil {
 		logger.ZapLogger.Error("error in get user", zap.Error(err), zap.String("function", "userServiceRedis.GetUser"))
 		return nil, err
@@ -52,18 +52,16 @@ func (u *UserServiceRedis) FindUser(id string, fiberCtx context.Context) (*dto.F
 	err = json.Unmarshal([]byte(val), &user)
 	if err != nil {
 		logger.ZapLogger.Error("error in json unmarshal", zap.Error(err), zap.String("function", "userServiceRedis.GetUser"))
-		return  nil,err
+		return nil, err
 	}
 	logger.ZapLogger.Info("user with id" + " " + user.ID.String() + " " + "was found")
-	return  &user, nil
+	return &user, nil
 }
 
-func (u *UserServiceRedis) IsRedisNil() bool {
-	return u.rc == nil
-}
 
-func (u *UserServiceRedis) SetRedisDB(redisClient *redis.Client) {
-	if u.IsRedisNil() {
+
+func (u *UserRedisRepository) SetRedisDB(redisClient *redis.Client) {
+	if u.rc == nil {
 		u.rc = redisClient
 	}
 }
