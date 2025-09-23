@@ -28,16 +28,18 @@ type UserService struct {
 	userRepositoryRedis  *repository.UserRedisRepository
 	userStatusRepository *repository.UserStatusRepository
 	userRepository *repository.UserRepository
+	appRepository *repository.AppRepository
 	modelName string
 }
 
-func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository, userRepository *repository.UserRepository) *UserService {
+func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository, userRepository *repository.UserRepository, appRepository *repository.AppRepository) *UserService {
 	return &UserService{
 		db:                   db,
 		userRepositoryRedis:  userRepositoryRedis,
 		userStatusRepository: userStatusRepository,
 		userRepository: userRepository,
 		modelName: "user model",
+		appRepository: appRepository,
 	}
 }
 
@@ -86,8 +88,8 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		Code:     &hashCode,
 		CodeDate: date.PtrTime(time.Now()),
 	}
-
-	if err = u.userRepository.CreateUser(newUser, fiberCtx); err != nil {
+	var idStr *string
+	if idStr, err = u.appRepository.CreateUserAndUserStatus(newUser, fiberCtx); err != nil {
 		status, message := helper.HandleErrors(err, u.modelName)
 		return status, message
 	} 
@@ -100,7 +102,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 			},
 			fiberCtx,
 		); err != nil {
-			logger.ZapLogger.Error("error in publish email. user id: "+newUser.ID.String(), zap.Error(err))
+			logger.ZapLogger.Error("error in publish email. user id: "+*idStr, zap.Error(err))
 		}
 	}()
 
@@ -112,7 +114,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 	logger.ZapLogger.Info("new user was created.")
 	m := map[string]string{
 		"message": msg,
-		"id":      newUser.ID.String(),
+		"id":      *idStr,
 	}
 
 	return 201, m
@@ -146,14 +148,7 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 	if err != nil {
 		return 500, err.Error()
 	}
-	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(model.UserModel{Code: &hashCode, CodeDate: date.PtrTime(time.Now())})
-	if result.Error != nil {
-		return 500, result.Error.Error()
-	}
-	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
-	if err != nil {
-		return 500, result.Error.Error()
-	}
+	if err := u.userRepository.cr
 	go func() {
 		if err := rabbitmq.GetRabbitMQClient().PublishEmail(
 			email_dto.SendEmailDTO{

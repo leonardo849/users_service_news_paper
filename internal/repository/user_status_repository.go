@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"users-service/internal/dto"
 	"users-service/internal/helper"
 	"users-service/internal/model"
 
@@ -20,12 +19,12 @@ func CreateUserStatusRepository(db *gorm.DB) *UserStatusRepository {
 	}
 }
 
-func (u *UserStatusRepository) CreateUserStatus(input dto.CreateUserStatusDTO, tx *gorm.DB) error {
+func (u *UserStatusRepository) CreateUserStatus(input model.UserStatusModel, tx *gorm.DB) error {
 	if tx == nil {
 		tx = u.db
 	}
 
-	err := tx.Create(&model.UserStatusModel{UserId: input.UserId}).Error
+	err := tx.Create(&input).Error
 	if err != nil {
 		return fmt.Errorf("%s: %w", helper.INTERNALSERVER, err)
 	}

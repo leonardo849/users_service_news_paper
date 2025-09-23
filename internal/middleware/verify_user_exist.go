@@ -16,14 +16,17 @@ import (
 
 var userRepository = repository.CreateUserRepository(repository.DB)
 var userStatusRepository = repository.CreateUserStatusRepository(repository.DB)
-var userServiceRedis = repository.CreateUserServiceRedis(redis.Rc)
-var userService = service.CreateUserService(nil, userServiceRedis, userStatusRepository, userRepository)
+var userRepositoryRedis = repository.CreateUserRepositoryRedis(redis.Rc)
+var appRepository = repository.CreateAppRepository(userRepository, userStatusRepository, repository.DB)
+var userService = service.CreateUserService(nil, userRepositoryRedis, userStatusRepository, userRepository, appRepository)
 
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+
 		userRepository.SetDB(repository.DB)
 		userStatusRepository.SetDB(repository.DB)
-		userServiceRedis.SetRedisDB(redis.Rc)
+		userRepositoryRedis.SetRedisDB(redis.Rc)
+		appRepository.SetDb(repository.DB)
 		userService.SetDB(repository.DB)
 		
 

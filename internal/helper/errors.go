@@ -1,8 +1,11 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -17,7 +20,7 @@ func HandleErrors(err error, model string) (status int, message string) {
 	}
 	errMessage := err.Error()
 	message = fmt.Sprintf("err: %s, model: %s", errMessage, model)
-	if strings.Contains(errMessage, NOTFOUND) {
+	if strings.Contains(errMessage, NOTFOUND) || errors.Is(err, gorm.ErrRecordNotFound) {
 		return 404, message
 	} else if strings.Contains(errMessage, CONFLICT) {
 		return 409, message

@@ -6,23 +6,25 @@ import (
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
-	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/service"
-	redisLib "github.com/redis/go-redis/v9"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
+	redisLib "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-func desactiveCodesJob(db *gorm.DB) {
+func desactiveCodesJob(db *gorm.DB, rc *redis.Client) {
 	if db == nil {
 		logger.ZapLogger.Fatal("repository.db is nill")
 	}
 	userRepository := repository.CreateUserRepository(db)
 	userStatusRepository := repository.CreateUserStatusRepository(db)
-	userServiceRedis := repository.CreateUserServiceRedis(redis.Rc)
-	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository)
+	appRepository := repository.CreateAppRepository(userRepository, userStatusRepository, db)
+	userServiceRedis := repository.CreateUserRepositoryRedis(rc)
+	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository, appRepository)
 	err := userService.ExpireCodes()
 	if err != nil {
 			logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
@@ -54,14 +56,13 @@ func desactiveCodesJob(db *gorm.DB) {
 }
 
 func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
-	// desactiveCodesJob(db)
-	if db == nil {
-		logger.ZapLogger.Fatal("repository.db is nill")
-	}
+	desactiveCodesJob(db, rc)
+
 	userRepository := repository.CreateUserRepository(db)
 	userStatusRepository := repository.CreateUserStatusRepository(db)
-	userServiceRedis := repository.CreateUserServiceRedis(rc)
-	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository)
+	appRepository := repository.CreateAppRepository(userRepository, userStatusRepository, db)
+	userRepositoryRedis := repository.CreateUserRepositoryRedis(rc)
+	userService := service.CreateUserService(db, userRepositoryRedis, userStatusRepository, userRepository, appRepository)
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())

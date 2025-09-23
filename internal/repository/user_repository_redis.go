@@ -15,7 +15,7 @@ type UserRedisRepository struct {
 	rc *redis.Client
 }
 
-func CreateUserServiceRedis(rc *redis.Client) *UserRedisRepository {
+func CreateUserRepositoryRedis(rc *redis.Client) *UserRedisRepository {
 	return &UserRedisRepository{
 		rc: rc,
 	}
