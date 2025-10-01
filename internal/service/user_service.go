@@ -148,17 +148,20 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 	if err != nil {
 		return 500, err.Error()
 	}
-	if err := u.userRepository.cr
+	email, err := u.userRepository.CreateNewCode(id, fiberCtx, &hashCode)
+	if err != nil {
+		return 
+	}
 	go func() {
 		if err := rabbitmq.GetRabbitMQClient().PublishEmail(
 			email_dto.SendEmailDTO{
-				To:      []string{user.Email},
+				To:      []string{*email},
 				Subject: "code",
 				Text:    code,
 			},
 			fiberCtx,
 		); err != nil {
-			logger.ZapLogger.Error("error in publish email. user id: "+user.ID.String(), zap.Error(err))
+			logger.ZapLogger.Error("error in publish email. user id: "+*email, zap.Error(err))
 		}
 	}()
 	return 200, "new code was generated. It was sent to your email"
