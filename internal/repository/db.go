@@ -8,15 +8,18 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 	"users-service/config"
 	"users-service/internal/dto"
-	"users-service/pkg/hash"
 	"users-service/internal/logger"
 	"users-service/internal/model"
+	"users-service/internal/rabbitmq"
 	"users-service/internal/validate"
+	"users-service/pkg/hash"
 
-	"time"
+	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto"
 
+	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -135,6 +138,17 @@ func createAccounts(db *gorm.DB) error {
 			return err
 		}
 		logger.ZapLogger.Info("users were created")
+		mapped := funk.Map(usersModel, func (u *model.UserModel) dtoSl.AuthPublishUserCreated {
+			return  dtoSl.AuthPublishUserCreated{
+				AuthId: u.ID.String(),
+				Username: u.Username,
+				Role: u.Role,
+			}
+		}).([]dtoSl.AuthPublishUserCreated)
+		if err := rabbitmq.GetRabbitMQClient().PublishUsersVerified(mapped, context.Background()); err != nil {
+			logger.ZapLogger.Fatal(err.Error())
+			return err
+		}
 		return  nil
 	}
 	

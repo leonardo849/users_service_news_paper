@@ -47,7 +47,7 @@ func (c *client) createExchanges() {
 	
 }
 
-func (c *client) PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context)  error {
+func (c *client) PublishUsersVerified(input []dtoSl.AuthPublishUserCreated, ctx context.Context)  error {
 	body, err := json.Marshal(input)
 	if err != nil {
 		logger.ZapLogger.Error("error in json marshal", zap.String("function", "client.PublishEmail"), zap.Error(err))
