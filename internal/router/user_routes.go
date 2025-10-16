@@ -5,12 +5,9 @@ import (
 	"users-service/config"
 	"users-service/internal/handler"
 	"users-service/internal/helper"
+	"users-service/internal/helper_structs"
 	"users-service/internal/logger"
 	"users-service/internal/middleware"
-	"users-service/internal/repository"
-	"users-service/internal/service"
-	"users-service/internal/unitofwork"
-
 	"github.com/gofiber/fiber/v2"
 	middlewareSl "github.com/leonardo849/shared_library_news_paper/pkg/middlewares"
 	"github.com/redis/go-redis/v9"
@@ -23,11 +20,7 @@ func desactiveCodesJob(db *gorm.DB, rc *redis.Client) {
 	if db == nil {
 		logger.ZapLogger.Fatal("repository.db is nill")
 	}
-	userRepository := repository.CreateUserRepository(db)
-	userStatusRepository := repository.CreateUserStatusRepository(db)
-	unitOfWork := unitofwork.CreateUnitOfWork(userRepository, userStatusRepository, db)
-	userServiceRedis := repository.CreateUserRepositoryRedis(rc)
-	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository, unitOfWork)
+	userService := helper_structs.CreateUserService(rc, db)
 	err := userService.ExpireCodes()
 	if err != nil {
 			logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
@@ -61,12 +54,8 @@ func desactiveCodesJob(db *gorm.DB, rc *redis.Client) {
 func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
 	desactiveCodesJob(db, rc)
 
-	userRepository := repository.CreateUserRepository(db)
-	userStatusRepository := repository.CreateUserStatusRepository(db)
-	unitOfWork := unitofwork.CreateUnitOfWork(userRepository, userStatusRepository, db)
-	userRepositoryRedis := repository.CreateUserRepositoryRedis(rc)
-	userService := service.CreateUserService(db, userRepositoryRedis, userStatusRepository, userRepository, unitOfWork)
-	userController := handler.UserController{UserService: userService}
+	userService := helper_structs.CreateUserService(rc, db)
+	userController := handler.CreateUserController(userService)
 	userGroup.Get("/all", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middlewareSl.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
 	userGroup.Get("/new_code", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsVerified(false), userController.GetNewCode())

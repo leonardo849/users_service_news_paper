@@ -11,7 +11,13 @@ import (
 )
 
 type UserController struct {
-	UserService *service.UserService
+	userService *service.UserService
+}
+
+func CreateUserController(userService *service.UserService) *UserController {
+	return  &UserController{
+		userService: userService,
+	}
 }
 
 // @Summary Create new user
@@ -33,7 +39,7 @@ func (u *UserController) CreateUser() fiber.Handler {
 			logger.ZapLogger.Error("error in create user user controller", zap.Error(err), zap.String("function", "usercontroller.createuser"))
 			return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
 		}
-		status, message := u.UserService.CreateUser(input, ctx.Context())
+		status, message := u.userService.CreateUser(input, ctx.Context())
 		logger.ZapLogger.Info("returning reply create user")
 		if status >= 400 {
 			return ctx.Status(status).JSON(fiber.Map{"error": message})
@@ -55,7 +61,7 @@ func (u *UserController) CreateUser() fiber.Handler {
 func (u *UserController) FindOneUser() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		status, reply := u.UserService.FindOneUserById(id, ctx.Context())
+		status, reply := u.userService.FindOneUserById(id, ctx.Context())
 		if status >= 400 {
 			logger.ZapLogger.Error("error in find one user user controller", zap.Any("error", reply))
 			return ctx.Status(status).JSON(fiber.Map{"error": reply})
@@ -83,7 +89,7 @@ func (u *UserController) LoginUser() fiber.Handler {
 			logger.ZapLogger.Error("error in body parser", zap.Error(err), zap.String("function", "user controller login user"))
 			return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
 		}
-		status, reply := u.UserService.LoginUser(input, ctx.Context())
+		status, reply := u.userService.LoginUser(input, ctx.Context())
 		if status >= 400 {
 			return ctx.Status(status).JSON(fiber.Map{"error": reply})
 		}
@@ -113,7 +119,7 @@ func (u *UserController) UpdateOneUser() fiber.Handler {
 			logger.ZapLogger.Error("error in body parser", zap.Error(err), zap.String("function", "user controller.updateoneuser"))
 			return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
 		}
-		status, reply := u.UserService.UpdateUser(input, ctx.Context(), id)
+		status, reply := u.userService.UpdateUser(input, ctx.Context(), id)
 		if status >= 400 {
 			logger.ZapLogger.Error("error in user service update user", zap.String("function", "user controller.updateoneuser"))
 			return ctx.Status(status).JSON(fiber.Map{"error": reply})
@@ -142,7 +148,7 @@ func (u *UserController) UpdateOneUserRole() fiber.Handler {
 			logger.ZapLogger.Error("error in body parser", zap.Error(err), zap.String("function", "usercontroller.updateoneuserrole"))
 			return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
 		}
-		status, reply := u.UserService.UpdateUserRole(input, ctx.Context(), id)
+		status, reply := u.userService.UpdateUserRole(input, ctx.Context(), id)
 		if status >= 400 {
 			logger.ZapLogger.Error("error in user service update user", zap.String("function", "user controller.updateoneuser"))
 			return ctx.Status(status).JSON(fiber.Map{"error": reply})
@@ -162,7 +168,7 @@ func (u *UserController) UpdateOneUserRole() fiber.Handler {
 // @Router /users/all [get]
 func (u *UserController) FindAllUsers() fiber.Handler {
 	return  func(ctx *fiber.Ctx) error {
-		status, users := u.UserService.FindAllUsers()
+		status, users := u.userService.FindAllUsers()
 		if status >= 400 {
 			logger.ZapLogger.Error("error in user service find all users", zap.String("function", "user controller.findallusers"))
 			return ctx.Status(status).JSON(fiber.Map{"error": "internal server error"})
@@ -195,7 +201,7 @@ func (u *UserController) VerifyUser() fiber.Handler {
 		user := map[string]interface{}(mapClaims)
 		id := user["id"].(string)
 
-		status, message := u.UserService.VerifyCode(id, ctx.Context(), input)
+		status, message := u.userService.VerifyCode(id, ctx.Context(), input)
 		if status >= 400 {
 			return  ctx.Status(status).JSON(fiber.Map{"error": message})
 		}
@@ -216,7 +222,7 @@ func (u *UserController) GetNewCode() fiber.Handler {
 		mapClaims := ctx.Locals("user").(jwt.MapClaims)
 		user := map[string]interface{}(mapClaims)
 		id := user["id"].(string)
-		status, message := u.UserService.CreateNewCode(id, ctx.Context())
+		status, message := u.userService.CreateNewCode(id, ctx.Context())
 		if status >= 400 {
 			return  ctx.Status(status).JSON(fiber.Map{"error": message})
 		}
