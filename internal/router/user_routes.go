@@ -2,6 +2,7 @@ package router
 
 import (
 	"time"
+	"users-service/config"
 	"users-service/internal/handler"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
@@ -11,6 +12,7 @@ import (
 	"users-service/internal/unitofwork"
 
 	"github.com/gofiber/fiber/v2"
+	middlewareSl "github.com/leonardo849/shared_library_news_paper/pkg/middlewares"
 	"github.com/redis/go-redis/v9"
 	redisLib "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -65,14 +67,14 @@ func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
 	userRepositoryRedis := repository.CreateUserRepositoryRedis(rc)
 	userService := service.CreateUserService(db, userRepositoryRedis, userStatusRepository, userRepository, unitOfWork)
 	userController := handler.UserController{UserService: userService}
-	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
+	userGroup.Get("/all", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middlewareSl.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
-	userGroup.Get("/new_code", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsVerified(false), userController.GetNewCode())
-	userGroup.Post("/verify", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsVerified(false), userController.VerifyUser())
+	userGroup.Get("/new_code", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsVerified(false), userController.GetNewCode())
+	userGroup.Post("/verify", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsVerified(false), userController.VerifyUser())
 	userGroup.Post("/login", userController.LoginUser())
-	userGroup.Get("/one/:id", middleware.VerifyJWT(),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) ,middleware.SameIdOrRole([]string{helper.Ceo})  ,userController.FindOneUser())
-	userGroup.Put("/update/:id", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true) , middleware.SameIdOrRole([]string{}), userController.UpdateOneUser())
-	userGroup.Patch("/update/role/:id", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) , middleware.CheckRole([]string{helper.Ceo}), userController.UpdateOneUserRole())
+	userGroup.Get("/one/:id", middlewareSl.VerifyJWT(config.Key),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) ,middlewareSl.SameIdOrRole([]string{helper.Ceo})  ,userController.FindOneUser())
+	userGroup.Put("/update/:id", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true) , middlewareSl.SameIdOrRole([]string{}), userController.UpdateOneUser())
+	userGroup.Patch("/update/role/:id", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) , middlewareSl.CheckRole([]string{helper.Ceo}), userController.UpdateOneUserRole())
 	
 	logger.ZapLogger.Info("user routes are running!")
 }

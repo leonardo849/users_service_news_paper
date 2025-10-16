@@ -2,6 +2,7 @@ package router
 
 import (
 	"os"
+	"users-service/config"
 	"users-service/internal/dto"
 	"users-service/internal/helper"
 	"users-service/internal/logger"
@@ -11,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
+	middlewareSl "github.com/leonardo849/shared_library_news_paper/pkg/middlewares"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -21,7 +23,7 @@ func SetupApp(db *gorm.DB, rc *redis.Client) *fiber.App {
 	app.Use(cors.New())
 	
 	logger.ZapLogger.Info("cors is ready")
-	app.Use(middleware.LogRequestsMiddleware(), middleware.PrometheusMiddleware())
+	app.Use(middlewareSl.LogRequestsMiddleware(), middleware.PrometheusMiddleware())
 
 	usersGroup := app.Group("/users")
 	setupUserRoutes(usersGroup, db, rc)
@@ -36,7 +38,7 @@ func SetupApp(db *gorm.DB, rc *redis.Client) *fiber.App {
 		return ctx.Status(200).JSON(dto.MessageDTO{Message: "what's up"})
 	})
 
-	app.Get("/metrics", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.CheckRole([]string{helper.Ceo,  helper.Developer}), middleware.IsActiveOrInactive(true) , adaptor.HTTPHandler(promhttp.Handler()))
+	app.Get("/metrics", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middlewareSl.CheckRole([]string{helper.Ceo,  helper.Developer}), middleware.IsActiveOrInactive(true) , adaptor.HTTPHandler(promhttp.Handler()))
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	logger.ZapLogger.Info("swagger is ready")
