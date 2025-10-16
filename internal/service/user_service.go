@@ -19,6 +19,7 @@ import (
 	"github.com/leonardo849/utils_for_backend/pkg/random"
 
 	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto"
+	errorsSl "github.com/leonardo849/shared_library_news_paper/pkg/errors"
 	"github.com/thoas/go-funk"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -169,7 +170,7 @@ func (u *UserService) CreateNewCode(id string, fiberCtx context.Context) (status
 }
 
 func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.VerifyCodeDTO) (status int, message interface{}) {
-	user, err := gorm.G[model.UserModel](u.db).Where("id = ? AND is_verified = ? AND code_date >= ?", id, false, time.Now().Add(-5*time.Minute)).First(fiberCtx)
+	user, err := u.userRepository.FindExpiredUser(id, fiberCtx)
 	if err != nil {
 		return 500, err.Error()
 	}
@@ -181,9 +182,9 @@ func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.
 		return 400, err.Error()
 	}
 	if hash.CompareHash(input.Code, *user.Code) {
-		result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(map[string]interface{}{"is_verified": true, "code": nil, "code_date": nil})
-		if result.Error != nil {
-			return 500, result.Error.Error()
+		err := u.userRepository.VerifyCode(id)
+		if err != nil {
+			return 500, err
 		} else {
 			go func() {
 				if err := rabbitmq.GetRabbitMQClient().PublishUsersVerified([]dtoSl.AuthPublishUserCreated{{AuthId: user.ID.String(), Username: user.Username, Role: user.Role}}, fiberCtx); err != nil {
@@ -204,15 +205,10 @@ func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (stat
 		return 200, *userRedis
 	}
 
-	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
+	user, err := u.userRepository.FindUserById(id, fiberCtx)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.ZapLogger.Error("a user with id "+id+" doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
-			return 404, "user with that id doesn't exists"
-		} else {
-			logger.ZapLogger.Error("internal server", zap.Error(err), zap.String("function", "userservice.findoneuser"))
-			return 500, err.Error()
-		}
+		status, message = errorsSl.HandleErrors(err, u.modelName)
+		return status, message
 	}
 	dto := dto.FindUserDTO{
 		ID:         user.ID,

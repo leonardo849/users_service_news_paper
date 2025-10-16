@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	errorsSl "github.com/leonardo849/utils_for_backend/pkg/errors"
 )
 
 type UserRepository struct {
@@ -46,6 +47,23 @@ func (u *UserRepository) CreateUser(input model.UserModel, fiberCtx context.Cont
 	return &idUuid, nil
 }
 
+func (u *UserRepository) FindExpiredUser (id string, fiberCtx context.Context) (*model.UserModel, error) {
+	user, err := gorm.G[model.UserModel](u.db).Where("id = ? AND is_verified = ? AND code_date >= ?", id, false, time.Now().Add(-5*time.Minute)).First(fiberCtx)
+	if err != nil {
+		return nil, nil
+	}
+	return  &user, nil
+}
+
+func (u *UserRepository) VerifyCode(id string) error {
+	err := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(map[string]interface{}{"is_verified": true, "code": nil, "code_date": nil}).Error
+	if err != nil {
+		return  fmt.Errorf("[%s] %s", helper.INTERNALSERVER, err.Error())
+	}
+	return  nil
+}
+
+
 func (u *UserRepository) SetDB(db *gorm.DB) {
 	if u.db == nil {
 		u.db = db
@@ -64,14 +82,28 @@ func (u *UserRepository) ExpireCodes() error {
 	return  nil
 }
 
-func (a *UserRepository) CreateNewCode(id string, fiberCtx context.Context, hashCode *string) (email *string, err error) {
-	result := a.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(model.UserModel{Code: hashCode, CodeDate: date.PtrTime(time.Now())})
+func (u *UserRepository) CreateNewCode(id string, fiberCtx context.Context, hashCode *string) (email *string, err error) {
+	result := u.db.Model(&model.UserModel{}).Where("id = ? AND is_verified = ?", id, false).Updates(model.UserModel{Code: hashCode, CodeDate: date.PtrTime(time.Now())})
 	if result.Error != nil {
 		return nil,fmt.Errorf("%s:%s", helper.INTERNALSERVER, result.Error.Error())
 	}
-	user, err := gorm.G[model.UserModel](a.db).Where("id = ?", id).First(fiberCtx)
+	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
 	if err != nil {
 		return nil,fmt.Errorf("%s:%s", helper.INTERNALSERVER, err.Error())
 	}
 	return &user.Email, nil
+}
+
+func (u *UserRepository) FindUserById(id string, fiberCtx context.Context) (*model.UserModel, error) {
+	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.ZapLogger.Error("a user with id "+id+" doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
+			return nil, fmt.Errorf("[%s] %s", errorsSl.NOTFOUND, "user with that id doesn't exists")
+		} else {
+			logger.ZapLogger.Error(err.Error(), zap.Error(err))
+			return nil, fmt.Errorf("[%s] %s", errorsSl.INTERNALSERVER, err.Error())
+		}
+	}
+	return &user, nil
 }
