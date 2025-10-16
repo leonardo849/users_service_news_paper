@@ -10,9 +10,9 @@ import (
 	"unicode"
 	"users-service/config"
 	"users-service/internal/helper"
-	"users-service/pkg/date"
-	"users-service/pkg/hash"
-	"users-service/pkg/random"
+	"github.com/leonardo849/utils_for_backend/pkg/date"
+	"github.com/leonardo849/utils_for_backend/pkg/hash"
+	"github.com/leonardo849/utils_for_backend/pkg/random"
 
 	"github.com/google/uuid"
 )

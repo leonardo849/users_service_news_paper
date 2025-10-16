@@ -15,7 +15,7 @@ import (
 	"users-service/internal/model"
 	"users-service/internal/rabbitmq"
 	"users-service/internal/validate"
-	"users-service/pkg/hash"
+	"github.com/leonardo849/utils_for_backend/pkg/hash"
 
 	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto"
 

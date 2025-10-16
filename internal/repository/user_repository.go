@@ -8,7 +8,7 @@ import (
 	"users-service/internal/helper"
 	"users-service/internal/logger"
 	"users-service/internal/model"
-	"users-service/pkg/date"
+	"github.com/leonardo849/utils_for_backend/pkg/date"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"

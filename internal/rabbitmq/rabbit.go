@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 	"users-service/internal/logger"
-	"users-service/pkg/email_dto"
+	"github.com/leonardo849/utils_for_backend/pkg/email_dto"
 
 	"strings"
 	dtoSl "github.com/leonardo849/shared_library_news_paper/pkg/dto" 
