@@ -11,6 +11,7 @@ import (
 	"users-service/internal/model"
 	"users-service/internal/rabbitmq"
 	"users-service/internal/repository"
+	"users-service/internal/unitofwork"
 	"users-service/internal/validate"
 	"users-service/pkg/date"
 	"users-service/pkg/email_dto"
@@ -28,18 +29,18 @@ type UserService struct {
 	userRepositoryRedis  *repository.UserRedisRepository
 	userStatusRepository *repository.UserStatusRepository
 	userRepository *repository.UserRepository
-	appRepository *repository.AppRepository
+	unitOfWork *unitofwork.Unitofwork
 	modelName string
 }
 
-func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository, userRepository *repository.UserRepository, appRepository *repository.AppRepository) *UserService {
+func CreateUserService(db *gorm.DB, userRepositoryRedis *repository.UserRedisRepository, userStatusRepository *repository.UserStatusRepository, userRepository *repository.UserRepository, unitOfWork *unitofwork.Unitofwork) *UserService {
 	return &UserService{
 		db:                   db,
 		userRepositoryRedis:  userRepositoryRedis,
 		userStatusRepository: userStatusRepository,
 		userRepository: userRepository,
 		modelName: "user model",
-		appRepository: appRepository,
+		unitOfWork: unitOfWork,
 	}
 }
 
@@ -89,7 +90,7 @@ func (u *UserService) CreateUser(input dto.CreateUserDTO, fiberCtx context.Conte
 		CodeDate: date.PtrTime(time.Now()),
 	}
 	var idStr *string
-	if idStr, err = u.appRepository.CreateUserAndUserStatus(newUser, fiberCtx); err != nil {
+	if idStr, err = u.unitOfWork.CreateUserAndUserStatus(newUser, fiberCtx); err != nil {
 		status, message := helper.HandleErrors(err, u.modelName)
 		return status, message
 	} 

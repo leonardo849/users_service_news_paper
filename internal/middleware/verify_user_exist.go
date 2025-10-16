@@ -7,6 +7,7 @@ import (
 	"users-service/internal/redis"
 	"users-service/internal/repository"
 	"users-service/internal/service"
+	"users-service/internal/unitofwork"
 
 	"log"
 
@@ -17,8 +18,8 @@ import (
 var userRepository = repository.CreateUserRepository(repository.DB)
 var userStatusRepository = repository.CreateUserStatusRepository(repository.DB)
 var userRepositoryRedis = repository.CreateUserRepositoryRedis(redis.Rc)
-var appRepository = repository.CreateAppRepository(userRepository, userStatusRepository, repository.DB)
-var userService = service.CreateUserService(nil, userRepositoryRedis, userStatusRepository, userRepository, appRepository)
+var unitOfWork = unitofwork.CreateUnitOfWork(userRepository, userStatusRepository, repository.DB)
+var userService = service.CreateUserService(nil, userRepositoryRedis, userStatusRepository, userRepository, unitOfWork)
 
 func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
@@ -26,7 +27,7 @@ func VerifyIfUserExistsAndIfUserIsExpired() fiber.Handler {
 		userRepository.SetDB(repository.DB)
 		userStatusRepository.SetDB(repository.DB)
 		userRepositoryRedis.SetRedisDB(redis.Rc)
-		appRepository.SetDb(repository.DB)
+		unitOfWork.SetDb(repository.DB)
 		userService.SetDB(repository.DB)
 		
 

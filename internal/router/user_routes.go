@@ -8,6 +8,7 @@ import (
 	"users-service/internal/middleware"
 	"users-service/internal/repository"
 	"users-service/internal/service"
+	"users-service/internal/unitofwork"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -22,9 +23,9 @@ func desactiveCodesJob(db *gorm.DB, rc *redis.Client) {
 	}
 	userRepository := repository.CreateUserRepository(db)
 	userStatusRepository := repository.CreateUserStatusRepository(db)
-	appRepository := repository.CreateAppRepository(userRepository, userStatusRepository, db)
+	unitOfWork := unitofwork.CreateUnitOfWork(userRepository, userStatusRepository, db)
 	userServiceRedis := repository.CreateUserRepositoryRedis(rc)
-	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository, appRepository)
+	userService := service.CreateUserService(db, userServiceRedis, userStatusRepository, userRepository, unitOfWork)
 	err := userService.ExpireCodes()
 	if err != nil {
 			logger.ZapLogger.Error("error from userservice.findexpiratedcodes", zap.Error(err))
@@ -60,9 +61,9 @@ func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
 
 	userRepository := repository.CreateUserRepository(db)
 	userStatusRepository := repository.CreateUserStatusRepository(db)
-	appRepository := repository.CreateAppRepository(userRepository, userStatusRepository, db)
+	unitOfWork := unitofwork.CreateUnitOfWork(userRepository, userStatusRepository, db)
 	userRepositoryRedis := repository.CreateUserRepositoryRedis(rc)
-	userService := service.CreateUserService(db, userRepositoryRedis, userStatusRepository, userRepository, appRepository)
+	userService := service.CreateUserService(db, userRepositoryRedis, userStatusRepository, userRepository, unitOfWork)
 	userController := handler.UserController{UserService: userService}
 	userGroup.Get("/all", middleware.VerifyJWT(), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true)  , middleware.CheckRole([]string{helper.Ceo}) ,userController.FindAllUsers())
 	userGroup.Post("/create", userController.CreateUser())
