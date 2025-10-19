@@ -62,7 +62,7 @@ func setupUserRoutes(userGroup fiber.Router, db*gorm.DB, rc *redisLib.Client) {
 	userGroup.Post("/verify", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsVerified(false), userController.VerifyUser())
 	userGroup.Post("/login", userController.LoginUser())
 	userGroup.Get("/one/:id", middlewareSl.VerifyJWT(config.Key),middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) ,middlewareSl.SameIdOrRole([]string{helper.Ceo})  ,userController.FindOneUser())
-	userGroup.Put("/update/:id", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true) , middlewareSl.SameIdOrRole([]string{}), userController.UpdateOneUser())
+	userGroup.Put("/update/:id", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(),middleware.IsActiveOrInactive(true) , middlewareSl.SameIdOrRole([]string{helper.Ceo, helper.Customer, helper.Developer, helper.Journalist}), userController.UpdateOneUser())
 	userGroup.Patch("/update/role/:id", middlewareSl.VerifyJWT(config.Key), middleware.VerifyIfUserExistsAndIfUserIsExpired(), middleware.IsActiveOrInactive(true) , middlewareSl.CheckRole([]string{helper.Ceo}), userController.UpdateOneUserRole())
 	
 	logger.ZapLogger.Info("user routes are running!")

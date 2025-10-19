@@ -212,6 +212,7 @@ func TestLoginCustomer(t *testing.T) {
 
 
 func TestFindOneUser(t *testing.T) {
+	log.Print(customer["id"])
 	searchedId := customer["id"].(string)
 	token := ceo["token"].(string)
 	e := newExpect(t)

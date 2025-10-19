@@ -32,7 +32,7 @@ func (u *UserRedisRepository) SetUser(user dto.FindUserDTO, fiberCtx context.Con
 		logger.ZapLogger.Error("error in json marshal(user dto.FindUserDTO)", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
 		return err
 	}
-	if redisStatus := u.rc.Set(fiberCtx, key, json, 30*time.Minute); redisStatus.Err() != nil {
+	if redisStatus := u.rc.Set(fiberCtx, key, json, 10*time.Minute); redisStatus.Err() != nil {
 		logger.ZapLogger.Error("error in redisClient.set", zap.Error(err), zap.String("function", "userServiceRedis.SetUser"))
 		return redisStatus.Err()
 	}

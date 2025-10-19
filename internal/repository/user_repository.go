@@ -94,6 +94,27 @@ func (u *UserRepository) CreateNewCode(id string, fiberCtx context.Context, hash
 	return &user.Email, nil
 }
 
+func (u *UserRepository) FindOneUserByEmail(email string, fiberCtx context.Context) (*model.UserModel, error) {
+	var user model.UserModel 
+	if err := u.db.Where("email = ?", email).First(&user).Error; err != nil {
+		logger.ZapLogger.Error("error:", zap.Error(err))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("[%s] user not found", errorsSl.NOTFOUND)
+		}
+		return  nil, fmt.Errorf("[%s] %s", errorsSl.INTERNALSERVER, err.Error())
+	}
+	return  &user, nil
+}
+
+func (u *UserRepository) FindAllUsers() ([]model.UserModel, error) {
+	var users []model.UserModel
+	if err := u.db.Omit("password").Find(&users).Error; err != nil {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		return nil, fmt.Errorf("[%s] %s", errorsSl.INTERNALSERVER, err.Error())
+	}
+	return  users, nil
+}
+
 func (u *UserRepository) FindUserById(id string, fiberCtx context.Context) (*model.UserModel, error) {
 	user, err := gorm.G[model.UserModel](u.db).Where("id = ?", id).First(fiberCtx)
 	if err != nil {
@@ -106,4 +127,12 @@ func (u *UserRepository) FindUserById(id string, fiberCtx context.Context) (*mod
 		}
 	}
 	return &user, nil
+}
+
+func (u *UserRepository) UpdateUserRoleById(id string, role string) error {
+	err := u.db.Model(&model.UserModel{}).Where("id = ?", id).Update("role", role).Error
+	if err != nil {
+		return  fmt.Errorf("[%s] %s", errorsSl.INTERNALSERVER, err.Error())
+	}
+	return  nil
 }

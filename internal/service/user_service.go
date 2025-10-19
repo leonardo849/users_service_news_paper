@@ -13,6 +13,7 @@ import (
 	"users-service/internal/repository"
 	"users-service/internal/unitofwork"
 	"users-service/internal/validate"
+
 	"github.com/leonardo849/utils_for_backend/pkg/date"
 	"github.com/leonardo849/utils_for_backend/pkg/email_dto"
 	"github.com/leonardo849/utils_for_backend/pkg/hash"
@@ -231,7 +232,7 @@ func (u *UserService) FindOneUserById(id string, fiberCtx context.Context) (stat
 }
 
 func (u *UserService) FindOneUserByEmail(email string, fiberCtx context.Context) (status int, message interface{}) {
-	user, err := gorm.G[model.UserModel](u.db).Where("email = ?", email).First(fiberCtx)
+	user, err := u.userRepository.FindOneUserByEmail(email, fiberCtx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.ZapLogger.Error("a user with email "+email+" doesn't exist", zap.Error(err), zap.String("function", "userservice.findoneuser"))
@@ -267,7 +268,7 @@ func (u *UserService) FindOneUserByEmail(email string, fiberCtx context.Context)
 }
 
 func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) (status int, message interface{}) {
-	user, err := gorm.G[model.UserModel](u.db).Where("email = ?", dto.Email).First(fiberCtx)
+	user, err := u.userRepository.FindOneUserByEmail(dto.Email, fiberCtx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.ZapLogger.Error("a user with that email doesn't exist", zap.Error(err), zap.String("function", "userService.loginuser"))
@@ -294,10 +295,10 @@ func (u *UserService) LoginUser(dto dto.LoginUserDTO, fiberCtx context.Context) 
 }
 
 func (u *UserService) FindAllUsers() (status int, users []dto.FindUserDTO) {
-	var arr []model.UserModel
-	result := u.db.Find(&arr)
+	arr, err  := u.userRepository.FindAllUsers()
 
-	if result.Error != nil {
+
+	if err != nil {
 		return 500, nil
 	}
 	users = funk.Map(arr, func(user model.UserModel) dto.FindUserDTO {
@@ -321,9 +322,11 @@ func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Conte
 		return 400, err.Error()
 	}
 
-	sts, msg := u.FindOneUserById(id, fiberCtx)
-	if sts >= 400 {
-		return sts, msg
+	userFromDB, err := u.userRepository.FindUserById(id, fiberCtx)
+	if err != nil  {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		status, message = errorsSl.HandleErrors(err, u.modelName)
+		return status, message
 	}
 
 	fields := map[string]interface{}{}
@@ -343,16 +346,23 @@ func (u *UserService) UpdateUser(input dto.UpdateUserDTO, fiberCtx context.Conte
 		return 500, result.Error.Error()
 	}
 
-	user, ok := msg.(dto.FindUserDTO)
-	if !ok {
-		logger.ZapLogger.Error("error in message to dto.finduserdto")
-	} else {
-		if err := u.userRepositoryRedis.SetUser(user, fiberCtx); err != nil {
-			logger.ZapLogger.Error("error in set user in redis")
-		} else {
-			logger.ZapLogger.Info("updated user was setted in redis")
-		}
+	user := dto.FindUserDTO{
+		ID: userFromDB.ID,
+		Username: userFromDB.Username,
+		Email: userFromDB.Email,
+		FullName: userFromDB.FullName,
+		CreatedAt: userFromDB.CreatedAt,
+		UpdatedAt: userFromDB.UpdatedAt,
+		IsActive: userFromDB.IsActive,
+		IsVerified: userFromDB.IsVerified,
+		Role: userFromDB.Role,
 	}
+	if err := u.userRepositoryRedis.SetUser(user, fiberCtx); err != nil {
+		logger.ZapLogger.Error("error in set user in redis")
+	} else {
+		logger.ZapLogger.Info("updated user was setted in redis")
+	}
+	
 	return 200, "user was updated"
 }
 
@@ -361,26 +371,43 @@ func (u *UserService) UpdateUserRole(input dto.UpdateUserRoleDTO, fiberCtx conte
 		logger.ZapLogger.Error("error in validate struct", zap.Error(err), zap.String("function", "userservice.updateuserrole"))
 		return 400, err.Error()
 	}
-	sts, msg := u.FindOneUserById(id, fiberCtx)
-	if sts >= 400 {
-		return sts, msg
-	}
-	err := u.db.Model(&model.UserModel{}).Where("id = ?", id).Update("role", input.Role).Error
+	_,err := u.userRepository.FindUserById(id, fiberCtx)
 	if err != nil {
-		logger.ZapLogger.Error("error in update role", zap.Error(err), zap.String("function", "userservice.updateuserrole"))
-		return 500, err.Error()
+		logger.ZapLogger.Error("error", zap.Error(err))
+		status, message = helper.HandleErrors(err, u.modelName)
+		return status, message
 	}
 
-	user, ok := msg.(dto.FindUserDTO)
-	if !ok {
-		logger.ZapLogger.Error("error in message to dto.finduserdto")
-	} else {
-		if err := u.userRepositoryRedis.SetUser(user, fiberCtx); err != nil {
-			logger.ZapLogger.Error("error in set user in redis")
-		} else {
-			logger.ZapLogger.Info("updated user was setted in redis")
-		}
+	err = u.userRepository.UpdateUserRoleById(id, input.Role)
+	if err != nil {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		status, message = helper.HandleErrors(err, u.modelName)
+		return status, message
 	}
+
+	user, err := u.userRepository.FindUserById(id, fiberCtx)
+	if err != nil {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		status, message = helper.HandleErrors(err, u.modelName)
+		return status, message
+	}
+	
+	dtoUser := dto.FindUserDTO{
+		ID: user.ID,
+		Username: user.Username,
+		Email: user.Email,
+		FullName: user.FullName,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		IsActive: user.IsActive,
+		IsVerified: user.IsVerified,
+		Role: user.Role,
+	}
+	
+	if err := u.userRepositoryRedis.SetUser(dtoUser, fiberCtx); err != nil {
+		logger.ZapLogger.Error("error in set user in cachê")
+	}
+
 	return 200, "user was updated"
 }
 
