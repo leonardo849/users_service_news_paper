@@ -22,7 +22,8 @@ type clientI interface {
 	createExchanges()
 	PublishEmail(input email_dto.SendEmailDTO, ctx  context.Context) error
 	CloseRabbit()
-	PublishUsersVerified(input []dtoSl.AuthPublishUserCreated, ctx context.Context) error
+	PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context) error
+	PublishSeed(input []dtoSl.AuthPublishUserCreated, ctx context.Context) error
 }
 
 type client struct {

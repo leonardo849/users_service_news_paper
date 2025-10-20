@@ -47,7 +47,7 @@ func (c *client) createExchanges() {
 	
 }
 
-func (c *client) PublishUsersVerified(input []dtoSl.AuthPublishUserCreated, ctx context.Context)  error {
+func (c *client) PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context)  error {
 	body, err := json.Marshal(input)
 	if err != nil {
 		logger.ZapLogger.Error("error in json marshal", zap.String("function", "client.PublishEmail"), zap.Error(err))
@@ -55,7 +55,29 @@ func (c *client) PublishUsersVerified(input []dtoSl.AuthPublishUserCreated, ctx 
 	}
 	err = c.ch.PublishWithContext(ctx, 
 		exchangeNameAuthEvents,
-		keyUserVerified,
+		constsSl.KeyUserAuthVerified,
+		false, 
+		false, 
+		amqp091.Publishing{
+			ContentType: "application/json",
+			Body: body,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return  nil
+}
+
+func (c *client) PublishSeed(input []dtoSl.AuthPublishUserCreated, ctx context.Context) error {
+	body, err := json.Marshal(input)
+	if err != nil {
+		logger.ZapLogger.Error("error in json marshal", zap.String("function", "client.PublishEmail"), zap.Error(err))
+		return  err
+	}
+	err = c.ch.PublishWithContext(ctx, 
+		exchangeNameAuthEvents,
+		constsSl.KeyUsersSeed,
 		false, 
 		false, 
 		amqp091.Publishing{

@@ -188,7 +188,7 @@ func (u *UserService) VerifyCode(id string, fiberCtx context.Context, input dto.
 			return 500, err
 		} else {
 			go func() {
-				if err := rabbitmq.GetRabbitMQClient().PublishUsersVerified([]dtoSl.AuthPublishUserCreated{{AuthId: user.ID.String(), Username: user.Username, Role: user.Role}}, fiberCtx); err != nil {
+				if err := rabbitmq.GetRabbitMQClient().PublishUserVerified(dtoSl.AuthPublishUserCreated{AuthId: user.ID.String(), Username: user.Username, Role: user.Role}, fiberCtx); err != nil {
 					logger.ZapLogger.Warn("error in publishing users verified", zap.Error(err))
 				}
 			}()

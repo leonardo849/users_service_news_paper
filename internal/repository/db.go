@@ -85,72 +85,108 @@ func migrateModels(db *gorm.DB) error {
 	return nil
 }
 
-func createAccounts(db *gorm.DB) error {
+func publishSeed(db *gorm.DB, usernames []string) error {
+	var users []model.UserModel
 
-	var users []dto.CreateUserFromJsonFileDTO
- 	projectRoot := config.FindProjectRoot()
-	if projectRoot == "" {
-		return  os.ErrNotExist
+	if err := db.Where("username IN ?", usernames).Find(&users).Error; err != nil {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		return  err
 	}
+
+	mapped := funk.Map(users, func(u model.UserModel) dtoSl.AuthPublishUserCreated {
+		return dtoSl.AuthPublishUserCreated{
+			AuthId: u.ID.String(),
+			Username: u.Username,
+			Role: u.Role,
+		}
+	}).([]dtoSl.AuthPublishUserCreated)
+
+	if err := rabbitmq.GetRabbitMQClient().PublishSeed(mapped, context.Background()); err != nil {
+		logger.ZapLogger.Error("error", zap.Error(err))
+		return err
+	}
+	return  nil
+}
+
+func createAccounts(db *gorm.DB) error {
+	var users []dto.CreateUserFromJsonFileDTO
+
+	projectRoot := config.FindProjectRoot()
+	if projectRoot == "" {
+		return os.ErrNotExist
+	}
+
 	envPath := filepath.Join(projectRoot, "config", "users.json")
 	data, err := os.ReadFile(envPath)
 	if err != nil {
-		return  err
+		return err
 	}
+
 	if err := json.Unmarshal(data, &users); err != nil {
-		return  err
+		return err
 	}
+
 	var usersModel []*model.UserModel
-	for i := 0; i < len(users); i++ {
-		newUser := users[i]
+
+	for _, newUser := range users {
 		if err := validate.Validate.Struct(newUser); err != nil {
-			return  err
-		}
-		hash, err := hash.StringToHash(newUser.Password)
-		if err != nil {
-			return  err
-		}
-		newUserModel := model.UserModel{
-			Username: newUser.Username,
-			Password: hash,
-			Email: newUser.Email,
-			FullName: newUser.Fullname,
-			Role: newUser.Role,
-			IsActive: true,
-			CodeDate: nil,
-			IsVerified: true,
-		}
-		_, err = gorm.G[model.UserModel](db).Where("username = ? OR email = ?", newUser.Username, newUser.Email).First(context.Background())
-		if err == nil {
-			logger.ZapLogger.Error(fmt.Sprintf("user with username %s or email %s were created", newUserModel.Username, newUserModel.Email), zap.Error(err),zap.String("function", "createAccounts"))
+			logger.ZapLogger.Warn("invalid user data", zap.String("username", newUser.Username), zap.Error(err))
 			continue
-		} else if !errors.Is(err ,gorm.ErrRecordNotFound) {
-			logger.ZapLogger.Error("error in first", zap.Error(err), zap.String("function", "createaccounts"))
-			return  err
 		}
 
+		hash, err := hash.StringToHash(newUser.Password)
+		if err != nil {
+			logger.ZapLogger.Error("error hashing password", zap.Error(err))
+			continue
+		}
+
+		newUserModel := model.UserModel{
+			Username:   newUser.Username,
+			Password:   hash,
+			Email:      newUser.Email,
+			FullName:   newUser.Fullname,
+			Role:       newUser.Role,
+			IsActive:   true,
+			CodeDate:   nil,
+			IsVerified: true,
+		}
+
+
+		_, err = gorm.G[model.UserModel](db).Where("username = ? OR email = ?", newUser.Username, newUser.Email).First(context.Background())
+
+		if err == nil {
+	
+			logger.ZapLogger.Info("user already exists", zap.String("username", newUserModel.Username))
+			continue
+		}
+
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.ZapLogger.Error("error checking if user exist", zap.Error(err))
+			continue
+		}
+
+		
 		usersModel = append(usersModel, &newUserModel)
 	}
 
+	
 	if len(usersModel) > 0 {
 		if err := db.Create(usersModel).Error; err != nil {
-			logger.ZapLogger.Error("error in create usersmodel", zap.Error(err), zap.String("function", "createaccounts"))
+			logger.ZapLogger.Error("error creating users", zap.Error(err))
 			return err
 		}
-		logger.ZapLogger.Info("users were created")
-		mapped := funk.Map(usersModel, func (u *model.UserModel) dtoSl.AuthPublishUserCreated {
-			return  dtoSl.AuthPublishUserCreated{
-				AuthId: u.ID.String(),
-				Username: u.Username,
-				Role: u.Role,
-			}
-		}).([]dtoSl.AuthPublishUserCreated)
-		if err := rabbitmq.GetRabbitMQClient().PublishUsersVerified(mapped, context.Background()); err != nil {
-			logger.ZapLogger.Fatal(err.Error())
-			return err
-		}
-		return  nil
+		logger.ZapLogger.Info("new users created", zap.Int("count", len(usersModel)))
 	}
+
 	
-	return  nil
+	usernames := funk.Map(users, func(u dto.CreateUserFromJsonFileDTO) string {
+		return u.Username
+	}).([]string)
+
+	if err := publishSeed(db, usernames); err != nil {
+		logger.ZapLogger.Error("error publishing seed", zap.Error(err))
+		return err
+	}
+
+	return nil
 }

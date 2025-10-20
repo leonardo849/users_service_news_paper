@@ -112,6 +112,8 @@ github.com/leonardo849/shared_library_news_paper v1.2.0 h1:mI2UTWZ38gnrhZwJzfaBS
 github.com/leonardo849/shared_library_news_paper v1.2.0/go.mod h1:r0jyrytSoY2VlDMGDUb87Qz3J2f3TKt4w6tyaqvjieo=
 github.com/leonardo849/shared_library_news_paper v1.6.0 h1:+ULaAJRxvHrixGHj52V9whhSwA1NInuS98+5A41O45c=
 github.com/leonardo849/shared_library_news_paper v1.6.0/go.mod h1:ijiwiPzQh3o/ftosr70V+2MqoTrTj0OISuuztXMKbHM=
+github.com/leonardo849/shared_library_news_paper v1.7.0 h1:jULL2QApmAc7thtkvGhYm1O1qK92ydBveA87rl2t4Q0=
+github.com/leonardo849/shared_library_news_paper v1.7.0/go.mod h1:ijiwiPzQh3o/ftosr70V+2MqoTrTj0OISuuztXMKbHM=
 github.com/leonardo849/utils_for_backend v1.1.0 h1:F0dIwW+mcngDdtj0t1tXEvgH9s+HjgJ21smSZK4V2cM=
 github.com/leonardo849/utils_for_backend v1.1.0/go.mod h1:f/5tY88Ali42NJbcN7V1BNNSUPVPWacKHHnF2iKFe4o=
 github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=

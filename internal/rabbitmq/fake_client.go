@@ -26,7 +26,12 @@ func (c *fakeClient) createExchanges() {
 	logger.ZapLogger.Info("[fake] creating exchanges")
 }
 
-func (c *fakeClient) PublishUsersVerified(input []dtoSl.AuthPublishUserCreated, ctx context.Context) error {
+func (c *fakeClient) PublishUserVerified(input dtoSl.AuthPublishUserCreated, ctx context.Context) error {
 	logger.ZapLogger.Info("[fake] publishing userverified")
+	return  nil
+}
+
+func (c *fakeClient) PublishSeed(input []dtoSl.AuthPublishUserCreated, ctx context.Context) error {
+	logger.ZapLogger.Info("[fake] publishing seed")
 	return  nil
 }

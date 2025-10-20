@@ -49,6 +49,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Panic(err.Error())
 	}
+	os.Setenv("RABBIT_ON", "false")
 	if err = logger.StartLogger(); err != nil {
 		log.Panic(err.Error())
 	}
