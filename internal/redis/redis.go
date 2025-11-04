@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"users-service/internal/logger"
 
+	"context"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -31,7 +32,12 @@ func ConnectToRedis() (*redis.Client, error) {
 		Password: redisPassword,
 		DB: dbInt,
 	})
+	pong, err := rc.Ping(context.Background()).Result()
+	if err != nil {
+		logger.ZapLogger.Fatal("error connecting to redis", zap.Error(err))
+	} else {
+		logger.ZapLogger.Info("redis is connected pong: " + pong )
+	}
 	Rc = rc
-	logger.ZapLogger.Info("connected to redis")
 	return rc, nil
 }
